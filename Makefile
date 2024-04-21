@@ -8,6 +8,7 @@ server: server.build
 	docker run -it --rm -p 8081:8081 server
 
 gen:
+	tailwindcss --input web/input.css --output assets/app.css
 	go generate ./...
 
 test:

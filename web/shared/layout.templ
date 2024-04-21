@@ -1,5 +1,7 @@
 package shared
 
+import "github.com/linkinlog/throttlr/web/partials"
+
 func NewLayout() *Layout {
 	url := "https://throttlr.dahlton.org"
 	img := "https://throttlr.dahlton.org/assets/logo.webp"
@@ -52,7 +54,8 @@ templ (l Layout) View() {
 	<!DOCTYPE html>
 	<html lang="en" itemscope="" itemtype="http://schema.org/Webpage">
 		@l.head()
-		<body>
+		<body class="min-h-screen bg-dark mx-5 mt-4">
+            @partials.Navbar()
 			@l.content
 		</body>
 	</html>
@@ -61,10 +64,11 @@ templ (l Layout) View() {
 templ (l Layout) head() {
 	<head>
 		<meta charset="utf-8"/>
+        <meta name="color-scheme" content="dark"/>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 		<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimal-ui"/>
 		<title>{ l.title }</title>
-		<link rel="icon" type="image/png" href="/assets/logo.webp"/>
+		<link rel="icon" type="image/png" href="/assets/logo.svg"/>
 		<meta name="description" content={ l.description }/>
 		@ga()
 		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
@@ -95,7 +99,7 @@ templ (l Layout) head() {
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet"/>
 		<!-- Styles -->
-		<link rel="stylesheet" href="/styles/templ.css"/>
+		<link rel="stylesheet" href="/assets/app.css"/>
 	</head>
 }
 

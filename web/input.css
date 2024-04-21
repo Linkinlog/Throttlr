@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#siteNav {
+  height: 100%;
+  width: 50%;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: visibility 0.5s, opacity 0.5s ease-out;
+  overflow-x: hidden;
+  padding: 1rem 1.25rem 0 1.25rem;
+  visibility: hidden;
+}
+
+#siteNav.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+#profileNav {
+  height: 100%;
+  width: 50%;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  opacity: 0;
+  transition: visibility 0.5s, opacity 0.5s ease-out;
+  overflow-x: hidden;
+  padding: 1rem 1.25rem 0 1.25rem;
+  visibility: hidden;
+}
+
+#profileNav.active {
+  visibility: visible;
+  opacity: 1;
+}
