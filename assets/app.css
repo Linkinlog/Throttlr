@@ -759,3 +759,10 @@ video {
   visibility: visible;
   opacity: 1;
 }
+
+@media (min-width: 768px) {
+  .md\:mx-\[25vw\] {
+    margin-left: 25vw;
+    margin-right: 25vw;
+  }
+}
