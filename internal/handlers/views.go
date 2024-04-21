@@ -17,6 +17,6 @@ func (h *ViewHandler) HandleLanding() http.HandlerFunc {
 	view := shared.NewLayout().SetContent(pages.Landing{})
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		view.View().Render(r.Context(), w)
+		_ = view.View().Render(r.Context(), w)
 	}
 }

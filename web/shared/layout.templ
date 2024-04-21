@@ -46,16 +46,16 @@ type Viewer interface {
 }
 
 func (l *Layout) SetContent(v Viewer) *Layout {
-    l.content = v.View()
-    return l
+	l.content = v.View()
+	return l
 }
 
 templ (l Layout) View() {
 	<!DOCTYPE html>
 	<html lang="en" itemscope="" itemtype="http://schema.org/Webpage">
 		@l.head()
-		<body class="min-h-screen bg-dark mx-5 mt-4">
-            @partials.Navbar()
+		<body class="min-h-screen bg-dark mx-5 my-4">
+			@partials.Navbar()
 			@l.content
 		</body>
 	</html>
@@ -64,7 +64,7 @@ templ (l Layout) View() {
 templ (l Layout) head() {
 	<head>
 		<meta charset="utf-8"/>
-        <meta name="color-scheme" content="dark"/>
+		<meta name="color-scheme" content="dark"/>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 		<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimal-ui"/>
 		<title>{ l.title }</title>
