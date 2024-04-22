@@ -2,7 +2,7 @@ package partials
 
 templ CTA(cta, link string) {
 	<nav class="flex w-full justify-between items-center">
-		<a class="bg-primary text-dark rounded-full text-base p-5 grow text-center" href={ templ.URL(link) }>{ cta }</a>
+		<a class="bg-primary text-dark rounded-full text-base p-5 grow text-center no-underline" href={ templ.URL(link) }>{ cta }</a>
 		<a class="p-5 bg-primary text-dark rounded-full ml-2 min-w-[7.5rem] flex justify-center" href={ templ.URL(link) }>
 			<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-narrow-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="#151515" fill="none" stroke-linecap="round" stroke-linejoin="round">
 				<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>

@@ -580,6 +580,10 @@ video {
   margin-left: 0.5rem;
 }
 
+.mt-12 {
+  margin-top: 3rem;
+}
+
 .mt-4 {
   margin-top: 1rem;
 }
@@ -698,6 +702,11 @@ video {
   color: rgb(21 21 21 / var(--tw-text-opacity));
 }
 
+.text-primary {
+  --tw-text-opacity: 1;
+  color: rgb(134 93 255 / var(--tw-text-opacity));
+}
+
 .text-secondary {
   --tw-text-opacity: 1;
   color: rgb(227 132 255 / var(--tw-text-opacity));
@@ -705,6 +714,10 @@ video {
 
 .underline {
   text-decoration-line: underline;
+}
+
+.no-underline {
+  text-decoration-line: none;
 }
 
 .shadow-md {
@@ -758,6 +771,10 @@ video {
 #profileNav.active {
   visibility: visible;
   opacity: 1;
+}
+
+a {
+  text-decoration: underline;
 }
 
 @media (min-width: 768px) {

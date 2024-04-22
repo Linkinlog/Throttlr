@@ -2,14 +2,36 @@ package shared
 
 import "github.com/linkinlog/throttlr/web/partials"
 
-func NewLayout() *Layout {
+type PageProps struct {
+	Title       string
+	Description string
+}
+
+type Viewer interface {
+	Props() PageProps
+	View() templ.Component
+}
+
+func NewLayout(viewer Viewer) *Layout {
 	url := "https://throttlr.dahlton.org"
 	img := "https://throttlr.dahlton.org/assets/logo.webp"
+
+	title := "Welcome"
+	if viewer.Props().Title != "" {
+		title = viewer.Props().Title
+	}
+
+	description := "Throttlr is a simple, easy to use, global rate limiter. Simplify your API usages."
+	if viewer.Props().Description != "" {
+		description = viewer.Props().Description
+	}
+
 	return &Layout{
-		title:       "Welcome to Throttlr",
-		description: "Throttlr is a simple, easy to use, global rate limiter. Simplify your API usages.",
+		title:       "Throttlr | " + title,
+		description: description,
 		img:         img,
 		url:         url,
+		content:     viewer.View(),
 	}
 }
 
@@ -41,13 +63,11 @@ func (l *Layout) SetURL(url string) *Layout {
 	return l
 }
 
-type Viewer interface {
-	View() templ.Component
-}
-
-func (l *Layout) SetContent(v Viewer) *Layout {
-	l.content = v.View()
-	return l
+func (l *Layout) Props() PageProps {
+	return PageProps{
+		Title:       l.title,
+		Description: l.description,
+	}
 }
 
 templ (l Layout) View() {

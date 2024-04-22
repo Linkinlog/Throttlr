@@ -1,8 +1,15 @@
 package pages
 
 import "github.com/linkinlog/throttlr/web/partials"
+import "github.com/linkinlog/throttlr/web/shared"
 
 type Landing struct{}
+
+func (l Landing) Props() shared.PageProps {
+	return shared.PageProps{
+		Title: "Welcome",
+	}
+}
 
 templ (l Landing) View() {
 	@hero()
