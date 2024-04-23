@@ -588,6 +588,10 @@ video {
   margin-top: 3rem;
 }
 
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
 .mt-4 {
   margin-top: 1rem;
 }
@@ -660,6 +664,10 @@ video {
   align-self: center;
 }
 
+.rounded {
+  border-radius: 0.25rem;
+}
+
 .rounded-full {
   border-radius: 9999px;
 }
@@ -672,6 +680,15 @@ video {
 .bg-primary {
   --tw-bg-opacity: 1;
   background-color: rgb(134 93 255 / var(--tw-bg-opacity));
+}
+
+.bg-yellow-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(250 204 21 / var(--tw-bg-opacity));
+}
+
+.p-2 {
+  padding: 0.5rem;
 }
 
 .p-5 {
@@ -703,6 +720,11 @@ video {
 .text-xl\/tight {
   font-size: 1.25rem;
   line-height: 1.25;
+}
+
+.text-xs\/3 {
+  font-size: 0.75rem;
+  line-height: .75rem;
 }
 
 .font-bold {
