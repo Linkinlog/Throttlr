@@ -20,16 +20,12 @@ func main() {
 	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	url := "http://localhost" + port
 
-	var secretManager handlers.SecretManager = secrets.NewDev()
 	if os.Getenv("ENV") == "prod" {
-		l.Info("using GCP secret manager")
-		secretManager = secrets.NewGCP("throttlr-421001")
+		l.Info("Running in production mode")
 		url = "https://throttlr.dahlton.org"
-	} else {
-		l.Info("using dev secret manager")
-		l.Info(os.Getenv("ENV"))
 	}
 
+	secretManager := secrets.NewDev()
 	ghKey, err := secretManager.Get("GITHUB_KEY")
 	if err != nil {
 		l.Error("failed to get GITHUB_KEY", "error", err.Error())
