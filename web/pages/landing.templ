@@ -3,29 +3,33 @@ package pages
 import "github.com/linkinlog/throttlr/web/partials"
 import "github.com/linkinlog/throttlr/web/shared"
 
-type Landing struct{}
+func NewLanding() landing {
+	return landing{}
+}
 
-func (l Landing) Props() shared.PageProps {
+type landing struct{}
+
+func (l landing) Props() shared.PageProps {
 	return shared.PageProps{
 		Title: "Welcome",
 	}
 }
 
-templ (l Landing) View() {
-	@hero()
+templ (l landing) View() {
+	@l.hero()
 	@limits()
 	@setup()
 	@headers()
 }
 
-templ hero() {
-	<section class="flex flex-col items-center mt-4">
+templ (l landing) hero() {
+	<section class="flex flex-col items-center">
 		@landingSvg()
 		<p class="text-secondary text-5xl/tight font-bold">Control</p>
 		<p class="text-secondary text-5xl/tight font-bold">Your</p>
 		<p class="text-secondary text-5xl/tight font-bold">API Calls</p>
 		<p class="text-secondary text-xl/tight text-center font-light pt-1 mb-4">Throttlr is your comprehensive solution for managing and optimizing API usage. Prevent excess usage with customizable limits, monitor in real time, and safeguard performance with alerts and insights.</p>
-		@partials.CTA("Get started for free", "/signup")
+		@partials.CTA("Get started for free", "/sign-up")
 	</section>
 }
 
@@ -36,7 +40,7 @@ templ limits() {
 		<p class="text-secondary text-5xl/tight font-bold">services</p>
 		<img class="shadow-md shadow-primary mb-4" src="/assets/limits.png"/>
 		<p class="text-secondary text-xl/tight text-center font-light pt-1 mb-4">With Throttlr, handling API rate limits has never been easier. Set global limits for all of your services and get back to what matters most.</p>
-		@partials.CTA("Sign up here!", "/signup")
+		@partials.CTA("Sign up here!", "/sign-up")
 	</section>
 }
 
@@ -50,7 +54,7 @@ templ setup() {
 		<p class="text-secondary text-xl/tight text-center font-light">We got you! </p>
 		<p class="text-secondary text-xl/tight text-center font-light">Only the essentials are required. </p>
 		<p class="text-secondary text-xl/tight text-center font-light mb-4">(Don’t worry, <a href="#" class="underline">more complex operations are supported too!</a>) </p>
-		@partials.CTA("Check it out", "/signup")
+		@partials.CTA("Check it out", "/sign-up")
 	</section>
 }
 
@@ -61,7 +65,7 @@ templ headers() {
 		<p class="text-secondary text-5xl/tight font-bold">headers</p>
 		<img class="shadow-md shadow-primary mb-4" src="/assets/headers.png"/>
 		<p class="text-secondary text-xl/tight text-center font-light mb-4">Maintaining simplicity, feel free to add any amount of headers right on the edit page. For more flexibility, dynamic headers are your friend!</p>
-		@partials.CTA("Take me there", "/signup")
+		@partials.CTA("Take me there", "/sign-up")
 	</section>
 }
 

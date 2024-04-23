@@ -13,15 +13,19 @@ import "bytes"
 import "github.com/linkinlog/throttlr/web/partials"
 import "github.com/linkinlog/throttlr/web/shared"
 
-type About struct{}
+func NewAbout() about {
+	return about{}
+}
 
-func (a About) Props() shared.PageProps {
+type about struct{}
+
+func (a about) Props() shared.PageProps {
 	return shared.PageProps{
-		Title: "About",
+		Title: "about",
 	}
 }
 
-func (a About) View() templ.Component {
+func (a about) View() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -49,7 +53,7 @@ func (a About) View() templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templ.EscapeString(" for "))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/about.templ`, Line: 21, Col: 157}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/about.templ`, Line: 25, Col: 157}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {

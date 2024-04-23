@@ -3,15 +3,19 @@ package pages
 import "github.com/linkinlog/throttlr/web/partials"
 import "github.com/linkinlog/throttlr/web/shared"
 
-type About struct{}
+func NewAbout() about {
+	return about{}
+}
 
-func (a About) Props() shared.PageProps {
+type about struct{}
+
+func (a about) Props() shared.PageProps {
 	return shared.PageProps{
-		Title: "About",
+		Title: "about",
 	}
 }
 
-templ (a About) View() {
+templ (a about) View() {
 	<section class="flex flex-col items-center mt-12">
 		@aboutSvg()
 		<p class="text-secondary text-5xl/tight font-bold mt-4">Made</p>

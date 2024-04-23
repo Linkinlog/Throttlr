@@ -1,5 +1,5 @@
 client.build: gen
-	@docker build -t client -f ./build/Dockerfile.client .
+	@docker build --build-arg ENV=dev -t client -f ./build/Dockerfile.client .
 client: client.build
 	@docker run -it --rm -p 8080:8080 client
 server.build:
@@ -18,6 +18,7 @@ test:
 	@go test -v ./...
 
 lint: gen
+	@go mod tidy
 	@templ fmt .
 	@gofumpt -d -w .
 	@golangci-lint run

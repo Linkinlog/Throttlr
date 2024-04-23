@@ -13,15 +13,19 @@ import "bytes"
 import "github.com/linkinlog/throttlr/web/partials"
 import "github.com/linkinlog/throttlr/web/shared"
 
-type Landing struct{}
+func NewLanding() landing {
+	return landing{}
+}
 
-func (l Landing) Props() shared.PageProps {
+type landing struct{}
+
+func (l landing) Props() shared.PageProps {
 	return shared.PageProps{
 		Title: "Welcome",
 	}
 }
 
-func (l Landing) View() templ.Component {
+func (l landing) View() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -34,7 +38,7 @@ func (l Landing) View() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = hero().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = l.hero().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -57,7 +61,7 @@ func (l Landing) View() templ.Component {
 	})
 }
 
-func hero() templ.Component {
+func (l landing) hero() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -70,7 +74,7 @@ func hero() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section class=\"flex flex-col items-center mt-4\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section class=\"flex flex-col items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -82,7 +86,7 @@ func hero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.CTA("Get started for free", "/signup").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = partials.CTA("Get started for free", "/sign-up").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -117,7 +121,7 @@ func limits() templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.EscapeString("for"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/landing.templ`, Line: 35, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/landing.templ`, Line: 39, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -127,7 +131,7 @@ func limits() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.CTA("Sign up here!", "/signup").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = partials.CTA("Sign up here!", "/sign-up").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -159,7 +163,7 @@ func setup() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.CTA("Check it out", "/signup").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = partials.CTA("Check it out", "/sign-up").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -191,7 +195,7 @@ func headers() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.CTA("Take me there", "/signup").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = partials.CTA("Take me there", "/sign-up").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

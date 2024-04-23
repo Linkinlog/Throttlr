@@ -9,13 +9,17 @@ import (
 	"github.com/linkinlog/throttlr/web/shared"
 )
 
-func New(l *slog.Logger) http.Handler {
+func New(l *slog.Logger, sm SecretManager) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.NewAssets()))))
 
-	m.Handle("GET /", handleView(shared.NewLayout(pages.Landing{}), l))
-	m.Handle("GET /about", handleView(shared.NewLayout(pages.About{}), l))
+	m.Handle("GET /", handleView(shared.NewLayout(pages.NewLanding()), l))
+	m.Handle("GET /about", handleView(shared.NewLayout(pages.NewAbout()), l))
+	m.Handle("GET /sign-up", handleView(shared.NewLayout(pages.NewAuth(false)), l))
+	m.Handle("GET /sign-in", handleView(shared.NewLayout(pages.NewAuth(true)), l))
+
+	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, sm)))
 
 	return m
 }
