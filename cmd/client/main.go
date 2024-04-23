@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -18,7 +17,7 @@ import (
 const port = ":8080"
 
 func main() {
-	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	url := "http://localhost" + port
 
 	var secretManager handlers.SecretManager = secrets.NewDev()
@@ -60,6 +59,6 @@ func main() {
 
 	gothic.Store = sessions.NewCookieStore([]byte(sessionSecret))
 
-	fmt.Println("Server is running")
+	l.Info("Server listening", "port", port)
 	l.Error("main.go", "err", http.ListenAndServe(port, handlers.New(l, secretManager)))
 }
