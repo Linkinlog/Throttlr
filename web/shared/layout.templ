@@ -12,7 +12,7 @@ type Viewer interface {
 	View() templ.Component
 }
 
-func NewLayout(viewer Viewer) *Layout {
+func NewLayout(viewer Viewer, err string) *Layout {
 	url := "https://throttlr.dahlton.org"
 	img := "https://throttlr.dahlton.org/assets/logo.webp"
 
@@ -28,6 +28,7 @@ func NewLayout(viewer Viewer) *Layout {
 
 	return &Layout{
 		title:       "Throttlr | " + title,
+		err:         err,
 		description: description,
 		img:         img,
 		url:         url,
@@ -40,6 +41,7 @@ type Layout struct {
 	description string
 	img         string
 	url         string
+	err         string
 	content     templ.Component
 }
 
@@ -74,10 +76,15 @@ templ (l Layout) View() {
 	<!DOCTYPE html>
 	<html lang="en" itemscope="" itemtype="http://schema.org/Webpage">
 		@l.head()
-		<body class="min-h-screen bg-dark mx-5 mt-2 mb-4 md:mx-[25vw] flex flex-col">
+		<body class="min-h-screen bg-dark mx-5 mt-2 mb-4 flex flex-col">
 			@partials.BetaBanner()
 			@partials.Navbar()
-			@l.content
+			if l.err != "" {
+				@partials.Error(l.err)
+			}
+			<main class="sm:mx-[10vw] lg:mx-[25vw]">
+				@l.content
+			</main>
 		</body>
 	</html>
 }

@@ -7,50 +7,76 @@ script toggleNav(id string) {
 templ Navbar() {
 	<nav class="flex justify-between mb-6">
 		@siteNav()
-		<svg onclick={ toggleNav("siteNav") } xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#865DFF" fill="none" stroke-linecap="round" stroke-linejoin="round">
+		@desktopSiteNav()
+		<svg onclick={ toggleNav("siteNav") } xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2block md:hidden" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#865DFF" fill="none" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 			<path d="M4 6l16 0"></path>
 			<path d="M4 12l16 0"></path>
 			<path d="M4 18l16 0"></path>
 		</svg>
-		<a href="/" class="text-primary">
+		<a href="/" class="text-primary self-center">
 			<img src="/assets/logo.webp" alt="logo" class="w-60 h-8 self-end"/>
 		</a>
-		<svg onclick={ toggleNav("profileNav") } xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-circle" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#865DFF" fill="none" stroke-linecap="round" stroke-linejoin="round">
+		<svg onclick={ toggleNav("profileNav") } xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-circle block md:hidden" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#865DFF" fill="none" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 			<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
 			<path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
 			<path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855"></path>
 		</svg>
 		@profileNav()
+		@desktopProfileNav()
 	</nav>
 }
 
 templ siteNav() {
-	<aside id="siteNav" class="bg-primary">
+	<aside id="siteNav" class="bg-primary block md:hidden">
 		<svg onclick={ toggleNav("siteNav") } xmlns="http://www.w3.org/2000/svg" class="float-right icon icon-tabler icon-tabler-x" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#151515" fill="none" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 			<path d="M18 6l-12 12"></path>
 			<path d="M6 6l12 12"></path>
 		</svg>
 		<ul class="pt-[50%] leading-[5rem] text-dark">
-			<a href="/" class="block">Home</a>
-			<a href="/about" class="block">About</a>
-			<a href="#" class="block">Documentation</a>
+			@siteNavList()
 		</ul>
 	</aside>
 }
 
+templ siteNavList() {
+	<a href="/" class="block">Home</a>
+	<a href="/about" class="block">About</a>
+	<a href="/docs" class="block">Docs</a>
+}
+
 templ profileNav() {
-	<aside id="profileNav" class="bg-primary">
+	<aside id="profileNav" class="bg-primary block md:hidden">
 		<svg onclick={ toggleNav("profileNav") } xmlns="http://www.w3.org/2000/svg" class="float-right icon icon-tabler icon-tabler-x" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#151515" fill="none" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 			<path d="M18 6l-12 12"></path>
 			<path d="M6 6l12 12"></path>
 		</svg>
 		<ul class="pt-[50%] leading-[5rem] text-dark">
-			<a href="/sign-up" class="block">Sign Up</a>
-			<a href="/sign-in" class="block">Sign In</a>
+			@profileNavList()
+		</ul>
+	</aside>
+}
+
+templ profileNavList() {
+	<a href="/sign-up" class="block">Sign Up</a>
+	<a href="/sign-in" class="block">Sign In</a>
+}
+
+templ desktopSiteNav() {
+	<aside class="hidden md:block w-56 text-lg">
+		<ul class="leading-[5rem] text-secondary flex flex-row justify-evenly">
+			@siteNavList()
+		</ul>
+	</aside>
+}
+
+templ desktopProfileNav() {
+	<aside class="hidden md:block w-56 text-lg">
+		<ul class="leading-[5rem] text-secondary flex flex-row justify-evenly">
+			@profileNavList()
 		</ul>
 	</aside>
 }

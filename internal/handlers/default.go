@@ -14,12 +14,21 @@ func New(l *slog.Logger, sm SecretManager) *http.ServeMux {
 
 	m.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.NewAssets()))))
 
-	m.Handle("GET /", handleView(shared.NewLayout(pages.NewLanding()), l))
-	m.Handle("GET /about", handleView(shared.NewLayout(pages.NewAbout()), l))
-	m.Handle("GET /sign-up", handleView(shared.NewLayout(pages.NewAuth(false)), l))
-	m.Handle("GET /sign-in", handleView(shared.NewLayout(pages.NewAuth(true)), l))
+	m.Handle("GET /about", handleView(shared.NewLayout(pages.NewAbout(), ""), l))
+	m.Handle("GET /sign-up", handleView(shared.NewLayout(pages.NewAuth(false), ""), l))
+	m.Handle("GET /sign-in", handleView(shared.NewLayout(pages.NewAuth(true), ""), l))
+	m.Handle("GET /docs", handleView(shared.NewLayout(pages.NewWip(), ""), l))
 
 	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, sm)))
+
+	// catch-all + landing
+	m.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		handler := handleView(shared.NewLayout(pages.NewNotFound(), ""), l)
+		if r.URL.Path == "/" {
+			handler = handleView(shared.NewLayout(pages.NewLanding(), ""), l)
+		}
+		handler(w, r)
+	})
 
 	return m
 }
