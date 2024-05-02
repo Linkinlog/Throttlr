@@ -1,15 +1,16 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
-	"github.com/gorilla/sessions"
+	"github.com/linkinlog/throttlr/internal"
+	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/handlers"
-	"github.com/linkinlog/throttlr/internal/secrets"
 	"github.com/markbates/goth"
-	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/google"
 )
@@ -17,44 +18,55 @@ import (
 const port = ":8080"
 
 func main() {
-	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	s := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	s.Info("Server listening", "port", port)
+
+	if err := setupGothic(); err != nil {
+		s.Error(err.Error())
+		return
+	}
+
+	sqlDb, err := sql.Open("sqlite", "throttlr.db")
+	if err != nil {
+		s.Error("failed to open database", "err", err)
+		return
+	}
+
+	us := db.NewUserStore(sqlDb)
+
+	s.Error("main.go", "err", http.ListenAndServe(port, handlers.HandleClient(s, us)))
+}
+
+func setupGothic() error {
+	env := internal.NewEnv()
+
+	ghKey, err := env.Get("GITHUB_KEY")
+	if err != nil {
+		return fmt.Errorf("failed to get GITHUB_KEY, %w", err)
+	}
+	ghSecret, err := env.Get("GITHUB_SECRET")
+	if err != nil {
+		return fmt.Errorf("failed to get GITHUB_SECRET, %w", err)
+	}
+	gk, err := env.Get("GOOGLE_KEY")
+	if err != nil {
+		return fmt.Errorf("failed to get GOOGLE_KEY, %w", err)
+	}
+	gs, err := env.Get("GOOGLE_SECRET")
+	if err != nil {
+		return fmt.Errorf("failed to get GOOGLE_SECRET, %w", err)
+	}
+
 	url := "http://localhost" + port
 
-	if os.Getenv("ENV") == "prod" {
-		l.Info("Running in production mode")
+	if env, _ := env.Get("ENV"); env == "prod" {
+		slog.Info("Running in production mode")
 		url = "https://throttlr.dahlton.org"
-	}
-
-	secretManager := secrets.NewDev()
-	ghKey, err := secretManager.Get("GITHUB_KEY")
-	if err != nil {
-		l.Error("failed to get GITHUB_KEY", "error", err.Error())
-	}
-	ghSecret, err := secretManager.Get("GITHUB_SECRET")
-	if err != nil {
-		l.Error("failed to get GITHUB_SECRET", "error", err.Error())
-	}
-	gk, err := secretManager.Get("GOOGLE_KEY")
-	if err != nil {
-		l.Error("failed to get GOOGLE_KEY", "error", err.Error())
-	}
-	gs, err := secretManager.Get("GOOGLE_SECRET")
-	if err != nil {
-		l.Error("failed to get GOOGLE_SECRET", "error", err.Error())
 	}
 
 	goth.UseProviders(
 		github.New(ghKey, ghSecret, url+"/auth/github/callback"),
-		google.New(gk, gs, url+"/auth/google/callback"),
+		google.New(gk, gs, url+"/auth/google/callback", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"),
 	)
-
-	sessionSecret, err := secretManager.Get("SESSION_SECRET")
-	if err != nil {
-		l.Error("failed to get SESSION_SECRET", "error", err.Error())
-	}
-
-	gothic.Store = sessions.NewCookieStore([]byte(sessionSecret))
-
-	l.Info("Server listening", "port", port)
-	l.Error("main.go", "err", http.ListenAndServe(port, handlers.New(l, secretManager)))
+	return nil
 }

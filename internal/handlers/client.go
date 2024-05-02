@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/linkinlog/throttlr/assets"
+	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/web/pages"
 	"github.com/linkinlog/throttlr/web/shared"
 )
 
-func New(l *slog.Logger, sm SecretManager) *http.ServeMux {
+func HandleClient(l *slog.Logger, us *db.UserStore) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.NewAssets()))))
@@ -19,7 +20,7 @@ func New(l *slog.Logger, sm SecretManager) *http.ServeMux {
 	m.Handle("GET /sign-in", handleView(shared.NewLayout(pages.NewAuth(true), ""), l))
 	m.Handle("GET /docs", handleView(shared.NewLayout(pages.NewWip(), ""), l))
 
-	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, sm)))
+	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, us)))
 
 	// catch-all + landing
 	m.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {

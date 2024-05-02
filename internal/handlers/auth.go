@@ -1,58 +1,83 @@
 package handlers
 
 import (
-	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 
+	"github.com/linkinlog/throttlr/internal/db"
+	"github.com/linkinlog/throttlr/internal/models"
 	"github.com/linkinlog/throttlr/web/pages"
 	"github.com/linkinlog/throttlr/web/shared"
 	"github.com/markbates/goth/gothic"
 )
 
-type SecretManager interface {
-	Get(key string) (string, error)
-}
-
-func HandleAuth(l *slog.Logger, sm SecretManager) *http.ServeMux {
+func HandleAuth(l *slog.Logger, us *db.UserStore) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("GET /", handleView(shared.NewLayout(pages.NewNotFound(), ""), l))
 	m.Handle("GET /sign-out", logHandler(l, handleLogout()))
-	m.Handle("GET /{provider}", logHandler(l, handleProvider()))
-	m.Handle("GET /{provider}/callback", logHandler(l, handleProviderCallback()))
+	m.Handle("GET /{provider}", logHandler(l, handleProvider(us)))
+	m.Handle("GET /{provider}/callback", logHandler(l, handleProviderCallback(us)))
 
 	return m
 }
 
-type LogHandlerFunc func(http.ResponseWriter, *http.Request) error
+type httpError struct {
+	error
+	display string
+}
 
-func logHandler(l *slog.Logger, h LogHandlerFunc) http.HandlerFunc {
+type HandlerErrorFunc func(http.ResponseWriter, *http.Request) *httpError
+
+func logHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := h(w, r)
-		if err != nil {
-			l.Error("handler error", "error", err.Error())
-			handler := handleView(shared.NewLayout(pages.NewNotFound(), err.Error()), l)
+		httpErr := h(w, r)
+		if httpErr != nil {
+			l.Error("handler error", "error", httpErr.Error())
+			handler := handleView(shared.NewLayout(pages.NewNotFound(), httpErr.display), l)
 			handler(w, r)
 		}
 	}
 }
 
-func handleProvider() LogHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
+func handleProvider(us *db.UserStore) HandlerErrorFunc {
+	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		q := r.URL.Query()
 		q.Add("provider", r.PathValue("provider"))
 		r.URL.RawQuery = q.Encode()
 
-		if _, err := gothic.CompleteUserAuth(w, r); err == nil {
+		if u, err := gothic.CompleteUserAuth(w, r); err == nil {
+			uId := fmt.Sprintf("%s-%s", u.UserID, u.Provider)
+			if _, err := us.ById(r.Context(), uId); err == nil {
+				// @TODO
+			} else {
+				usr := models.NewUser().
+					SetId(uId).
+					SetName(u.Name).
+					SetEmail(u.Email)
+
+				if err := us.Store(r.Context(), *usr); err != nil {
+					return &httpError{
+						error:   err,
+						display: "user creation failed, try again.",
+					}
+				}
+
+				// @TODO
+			}
 			w.Header().Set("Location", "/")
 			w.WriteHeader(http.StatusTemporaryRedirect)
 			return nil
 		} else {
 			// would be nice gothic had set errors but oh well
-			if !strings.Contains(err.Error(), "could not find a matching session") && !strings.EqualFold(err.Error(), "state token mismatch") {
-				return errors.New("authentication failed, please try again")
+			if !strings.Contains(err.Error(), "could not find a matching session") &&
+				!strings.EqualFold(err.Error(), "state token mismatch") {
+				return &httpError{
+					error:   err,
+					display: "auth failed, try again.",
+				}
 			}
 
 			gothic.BeginAuthHandler(w, r)
@@ -61,11 +86,32 @@ func handleProvider() LogHandlerFunc {
 	}
 }
 
-func handleProviderCallback() LogHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		_, err := gothic.CompleteUserAuth(w, r)
+func handleProviderCallback(us *db.UserStore) HandlerErrorFunc {
+	return func(w http.ResponseWriter, r *http.Request) *httpError {
+		u, err := gothic.CompleteUserAuth(w, r)
 		if err != nil {
-			return err
+			return &httpError{
+				error:   err,
+				display: "auth failed, try again.",
+			}
+		}
+		uId := fmt.Sprintf("%s-%s", u.UserID, u.Provider)
+		if _, err := us.ById(r.Context(), uId); err == nil {
+			// @TODO
+		} else {
+			usr := models.NewUser().
+				SetId(uId).
+				SetName(u.Name).
+				SetEmail(u.Email)
+
+			if err := us.Store(r.Context(), *usr); err != nil {
+				return &httpError{
+					error:   err,
+					display: "user creation failed, try again.",
+				}
+			}
+
+			// @TODO
 		}
 		w.Header().Set("Location", "/")
 		w.WriteHeader(http.StatusTemporaryRedirect)
@@ -73,11 +119,14 @@ func handleProviderCallback() LogHandlerFunc {
 	}
 }
 
-func handleLogout() LogHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
+func handleLogout() HandlerErrorFunc {
+	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		err := gothic.Logout(w, r)
 		if err != nil {
-			return err
+			return &httpError{
+				error:   err,
+				display: "logout failed, try again.",
+			}
 		}
 		w.Header().Set("Location", "/")
 		w.WriteHeader(http.StatusTemporaryRedirect)

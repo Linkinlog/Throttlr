@@ -1,19 +1,19 @@
-package secrets
+package internal
 
 import (
 	"errors"
 	"os"
 )
 
-func NewDev() *Dev {
-	return &Dev{}
+func NewEnv() *Env {
+	return &Env{}
 }
 
-type Dev struct{}
+type Env struct{}
 
 var NotFound = errors.New("key not found")
 
-func (d *Dev) Get(key string) (string, error) {
+func (e *Env) Get(key string) (string, error) {
 	str, found := os.LookupEnv(key)
 	if !found {
 		return "", NotFound
