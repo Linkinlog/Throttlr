@@ -12,11 +12,16 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/client/main.go
 
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+
+RUN goose -dir migrations sqlite ./throttlr.db up
+
 FROM alpine:latest
 
 WORKDIR /root/
 
 COPY --from=builder /app/main .
+COPY --from=builder /app/throttlr.db .
 
 ARG ENV
 ENV ENV=$ENV
