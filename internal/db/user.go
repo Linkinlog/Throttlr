@@ -33,12 +33,24 @@ func (us *UserStore) Store(ctx context.Context, u models.User) error {
 	return tx.Commit()
 }
 
-func (us *UserStore) ById(ctx context.Context, id string) (models.User, error) {
-	var u models.User
-	err := us.db.QueryRowContext(ctx, "SELECT id, email FROM users WHERE id = ?", id).Scan(&u.Id, &u.Email)
+func (us *UserStore) ById(ctx context.Context, id string) (*models.User, error) {
+	user := struct {
+		models.User
+		deletedAt *string
+	}{}
+
+	err := us.db.QueryRowContext(ctx, "SELECT id, name, email, deleted_at FROM users WHERE id = ?", id).Scan(&user.Id, &user.Name, &user.Email, &user.deletedAt)
 	if err != nil {
-		return models.User{}, err
+		return &models.User{}, err
 	}
 
-	return u, nil
+	if user.deletedAt != nil {
+		return &models.User{}, sql.ErrNoRows
+	}
+
+	return &models.User{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+	}, nil
 }

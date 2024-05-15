@@ -1,5 +1,7 @@
 package partials
 
+import "github.com/linkinlog/throttlr/internal/models"
+
 script toggleNav(id string) {
         document.getElementById(id).classList.toggle('active');
 }
@@ -54,19 +56,24 @@ templ profileNav() {
 			<path d="M18 6l-12 12"></path>
 			<path d="M6 6l12 12"></path>
 		</svg>
-		<ul class="pt-[50%] leading-[5rem] text-dark">
+		<ul class="pt-[50%] leading-[5rem] text-dark text-nowrap">
 			@profileNavList()
 		</ul>
 	</aside>
 }
 
 templ profileNavList() {
-	<a href="/sign-up" class="block">Sign Up</a>
-	<a href="/sign-in" class="block">Sign In</a>
+	if models.UserSignedIn(ctx) {
+		<p class="block text-ellipsis overflow-hidden p-4">{ models.UserFromCtx(ctx).Name }</p>
+		<a href="/settings" class="block p-4">Settings</a>
+		<a href="/auth/sign-out" class="block p-4">Sign Out</a>
+	} else {
+		<a href="/sign-in" class="block p-4">Sign In</a>
+	}
 }
 
 templ desktopSiteNav() {
-	<aside class="hidden md:block w-56 text-lg">
+	<aside class="hidden md:block w-[40rem] text-lg">
 		<ul class="leading-[5rem] text-secondary flex flex-row justify-evenly">
 			@siteNavList()
 		</ul>
@@ -74,8 +81,8 @@ templ desktopSiteNav() {
 }
 
 templ desktopProfileNav() {
-	<aside class="hidden md:block w-56 text-lg">
-		<ul class="leading-[5rem] text-secondary flex flex-row justify-evenly">
+	<aside class="hidden md:block w-[40rem] text-lg">
+		<ul class="leading-[5rem] text-secondary flex flex-row justify-evenly text-nowrap">
 			@profileNavList()
 		</ul>
 	</aside>

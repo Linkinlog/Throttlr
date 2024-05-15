@@ -7,7 +7,6 @@ require (
 	github.com/gorilla/sessions v1.1.1
 	github.com/markbates/goth v1.79.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/crypto v0.22.0
 	modernc.org/sqlite v1.29.8
 )
 

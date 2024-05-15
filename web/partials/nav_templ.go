@@ -10,6 +10,8 @@ import "context"
 import "io"
 import "bytes"
 
+import "github.com/linkinlog/throttlr/internal/models"
+
 func toggleNav(id string) templ.ComponentScript {
 	return templ.ComponentScript{
 		Name: `__templ_toggleNav_d19b`,
@@ -201,7 +203,7 @@ func profileNav() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" xmlns=\"http://www.w3.org/2000/svg\" class=\"float-right icon icon-tabler icon-tabler-x\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"#151515\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M18 6l-12 12\"></path> <path d=\"M6 6l12 12\"></path></svg><ul class=\"pt-[50%] leading-[5rem] text-dark\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" xmlns=\"http://www.w3.org/2000/svg\" class=\"float-right icon icon-tabler icon-tabler-x\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"#151515\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M18 6l-12 12\"></path> <path d=\"M6 6l12 12\"></path></svg><ul class=\"pt-[50%] leading-[5rem] text-dark text-nowrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -233,9 +235,29 @@ func profileNavList() templ.Component {
 			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/sign-up\" class=\"block\">Sign Up</a> <a href=\"/sign-in\" class=\"block\">Sign In</a>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if models.UserSignedIn(ctx) {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<p class=\"block text-ellipsis overflow-hidden p-4\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(models.UserFromCtx(ctx).Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/partials/nav.templ`, Line: 67, Col: 83}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><a href=\"/settings\" class=\"block p-4\">Settings</a> <a href=\"/auth/sign-out\" class=\"block p-4\">Sign Out</a>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/sign-in\" class=\"block p-4\">Sign In</a>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		if !templ_7745c5c3_IsBuffer {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
@@ -252,12 +274,12 @@ func desktopSiteNav() templ.Component {
 			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-56 text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-[40rem] text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -284,12 +306,12 @@ func desktopProfileNav() templ.Component {
 			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-56 text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-[40rem] text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly text-nowrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

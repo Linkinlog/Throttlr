@@ -5,13 +5,16 @@ import (
 	"os"
 )
 
+var (
+	DefaultEnv = NewEnv()
+	NotFound   = errors.New("key not found")
+)
+
 func NewEnv() *Env {
 	return &Env{}
 }
 
 type Env struct{}
-
-var NotFound = errors.New("key not found")
 
 func (e *Env) Get(key string) (string, error) {
 	str, found := os.LookupEnv(key)
