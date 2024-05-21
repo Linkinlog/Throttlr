@@ -33,6 +33,7 @@ func HandleAuth(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.Serve
 
 	m.Handle("GET /", withUser(handleView(shared.NewLayout(pages.NewNotFound(), ""), l), gs))
 	m.Handle("GET /sign-out", logHandler(l, gs, handleLogout(gs)))
+	m.Handle("GET /delete", withUser(logHandler(l, gs, handleDelete(us)), gs))
 	m.Handle("GET /{provider}", logHandler(l, gs, handleProvider(us, gs)))
 	m.Handle("GET /{provider}/callback", logHandler(l, gs, handleProviderCallback(us, gs)))
 
@@ -54,6 +55,23 @@ func logHandler(l *slog.Logger, gs sessions.Store, h HandlerErrorFunc) http.Hand
 			handler := withUser(handleView(shared.NewLayout(pages.NewNotFound(), httpErr.display), l), gs)
 			handler(w, r)
 		}
+	}
+}
+
+func handleDelete(us *db.UserStore) HandlerErrorFunc {
+	return func(w http.ResponseWriter, r *http.Request) *httpError {
+		user := models.UserFromCtx(r.Context())
+		fmt.Println(user)
+		err := us.Delete(r.Context(), user.Id)
+		if err != nil {
+			return &httpError{
+				error:   fmt.Errorf("delete: %w", err),
+				display: logoutDisplay,
+			}
+		}
+		w.Header().Set("Location", "/auth/sign-out")
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		return nil
 	}
 }
 
