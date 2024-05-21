@@ -34,18 +34,11 @@ func (us *UserStore) Store(ctx context.Context, u models.User) error {
 }
 
 func (us *UserStore) ById(ctx context.Context, id string) (*models.User, error) {
-	user := struct {
-		models.User
-		deletedAt *string
-	}{}
+	var user models.User
 
-	err := us.db.QueryRowContext(ctx, "SELECT id, name, email, deleted_at FROM users WHERE id = ?", id).Scan(&user.Id, &user.Name, &user.Email, &user.deletedAt)
+	err := us.db.QueryRowContext(ctx, "SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.Id, &user.Name, &user.Email)
 	if err != nil {
 		return &models.User{}, err
-	}
-
-	if user.deletedAt != nil {
-		return &models.User{}, sql.ErrNoRows
 	}
 
 	return &models.User{
@@ -53,4 +46,21 @@ func (us *UserStore) ById(ctx context.Context, id string) (*models.User, error) 
 		Name:  user.Name,
 		Email: user.Email,
 	}, nil
+}
+
+func (us *UserStore) Delete(ctx context.Context, id string) error {
+	tx, err := us.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
