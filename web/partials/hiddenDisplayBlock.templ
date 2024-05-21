@@ -1,0 +1,21 @@
+package partials
+
+const revealText string = "Click to reveal"
+
+templ HiddenDisplayBlock(value, desc string) {
+	<section class="flex justify-between items-center w-full rounded border border-primary p-4" onclick={ toggleStars(value, revealText) }>
+		<p class="text-secondary sensitive hide">
+			{ revealText }
+		</p>
+	</section>
+	<p class="pl-2 text-secondary text-sm mt-2">{ desc }</p>
+}
+
+script toggleStars(value, revealText string) {
+    const element = event.currentTarget.querySelector('p.sensitive');
+
+    if (element.classList.contains('hide')) {
+        element.textContent = value;
+        element.classList.remove('hide');
+    }
+}

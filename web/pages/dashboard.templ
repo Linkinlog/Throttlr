@@ -1,0 +1,21 @@
+package pages
+
+import "github.com/linkinlog/throttlr/web/shared"
+
+func NewDashboard() dashboard {
+	return dashboard{}
+}
+
+type dashboard struct{}
+
+func (d dashboard) Props() shared.PageProps {
+	return shared.PageProps{
+		Title: "Dashboard",
+	}
+}
+
+templ (d dashboard) View() {
+	<section class="mt-4">
+		<button class="bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight">+</button>
+	</section>
+}
