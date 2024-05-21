@@ -31,7 +31,7 @@ func init() {
 func HandleAuth(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.ServeMux {
 	m := http.NewServeMux()
 
-	m.Handle("GET /", handleView(shared.NewLayout(pages.NewNotFound(), ""), l, gs))
+	m.Handle("GET /", withUser(handleView(shared.NewLayout(pages.NewNotFound(), ""), l), gs))
 	m.Handle("GET /sign-out", logHandler(l, gs, handleLogout(gs)))
 	m.Handle("GET /{provider}", logHandler(l, gs, handleProvider(us, gs)))
 	m.Handle("GET /{provider}/callback", logHandler(l, gs, handleProviderCallback(us, gs)))
@@ -51,7 +51,7 @@ func logHandler(l *slog.Logger, gs sessions.Store, h HandlerErrorFunc) http.Hand
 		httpErr := h(w, r)
 		if httpErr != nil {
 			l.Error("handler error", "error", httpErr.Error())
-			handler := handleView(shared.NewLayout(pages.NewNotFound(), httpErr.display), l, gs)
+			handler := withUser(handleView(shared.NewLayout(pages.NewNotFound(), httpErr.display), l), gs)
 			handler(w, r)
 		}
 	}
