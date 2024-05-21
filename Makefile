@@ -13,6 +13,15 @@ migrate:
 dev: gen
 	@go run ./cmd/client/main.go
 
+watch.go:
+	air
+
+watch.t:
+	templ generate --watch --proxy='http://localhost:8080'
+
+watch.tw:
+	tailwindcss --input web/input.css --output assets/app.css --minify -w
+
 gen:
 	@tailwindcss --input web/input.css --output assets/app.css --minify
 	@go generate ./...
