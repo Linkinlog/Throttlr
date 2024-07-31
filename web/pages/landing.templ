@@ -19,15 +19,14 @@ templ (l landing) View() {
 	@l.hero()
 	@limits()
 	@setup()
-	@headers()
 }
 
 templ (l landing) hero() {
 	<section class="flex flex-col items-center">
 		@landingSvg()
-		<p class="text-secondary text-5xl/tight font-bold">Control</p>
-		<p class="text-secondary text-5xl/tight font-bold">Your</p>
-		<p class="text-secondary text-5xl/tight font-bold">API Calls</p>
+		<p class="text-secondary text-5xl/tight font-bold">Control All</p>
+		<p class="text-secondary text-5xl/tight font-bold">Outbound</p>
+		<p class="text-secondary text-5xl/tight font-bold">Requests</p>
 		<p class="text-secondary text-xl/tight text-center font-light pt-1 mb-4">Throttlr is your comprehensive solution for managing and optimizing API usage. Prevent excess usage with customizable limits, monitor in real time, and safeguard performance with alerts and insights.</p>
 		@partials.CTA("Get started for free", "/sign-up")
 	</section>

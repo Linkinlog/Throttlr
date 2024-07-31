@@ -50,10 +50,6 @@ func (l landing) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = headers().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		if !templ_7745c5c3_IsBuffer {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
 		}
@@ -82,7 +78,7 @@ func (l landing) hero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<p class=\"text-secondary text-5xl/tight font-bold\">Control</p><p class=\"text-secondary text-5xl/tight font-bold\">Your</p><p class=\"text-secondary text-5xl/tight font-bold\">API Calls</p><p class=\"text-secondary text-xl/tight text-center font-light pt-1 mb-4\">Throttlr is your comprehensive solution for managing and optimizing API usage. Prevent excess usage with customizable limits, monitor in real time, and safeguard performance with alerts and insights.</p>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<p class=\"text-secondary text-5xl/tight font-bold\">Control All</p><p class=\"text-secondary text-5xl/tight font-bold\">Outbound</p><p class=\"text-secondary text-5xl/tight font-bold\">Requests</p><p class=\"text-secondary text-xl/tight text-center font-light pt-1 mb-4\">Throttlr is your comprehensive solution for managing and optimizing API usage. Prevent excess usage with customizable limits, monitor in real time, and safeguard performance with alerts and insights.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -121,7 +117,7 @@ func limits() templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.EscapeString("for"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/landing.templ`, Line: 39, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/landing.templ`, Line: 38, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

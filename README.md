@@ -1,8 +1,28 @@
 [![GoDoc](https://godoc.org/github.com/linkinlog/throttlr?status.svg)](https://godoc.org/github.com/linkinlog/throttlr) [![Go Report Card](https://goreportcard.com/badge/github.com/linkinlog/throttlr)](https://goreportcard.com/report/github.com/linkinlog/throttlr)
 
-# Throttlr
+# Table of Contents
+1. [What is Throttlr?](#What-is-Throttlr)
+2. [Goals](#Goals)
+3. [Resources Used](#resources-used)
 
-Provides seamless and efficient rate limiting and throttling for your APIs. With customizable controls and real-time monitoring, Throttlr ensures your API remains performant, secure, and stable under all conditions. Keep your systems healthy and your users happy with smart usage management and insights.
+# What is Throttlr?
+
+Have you ever faced costly limitations with a 3rd party API? Struggling to keep your distributed system within free tier limits?
+
+## Meet Throttlr.
+
+Throttlr is a rate limiter that helps you control requests per second, minute, hour, day, or month. It's simple to use, can be self-hosted, or accessed at https://throttlr.dahlton.org, and easily integrates into your existing systems as a drop-in replacement for your endpoints.
+
+## How it works
+Just register an endpoint with a limit, and Throttlr takes care of the rest. When the limit is reached, it returns a 429 status code, passing through all HTTP headers, data, and query parameters to your endpoint. All you need to do is replace the URL your service is using with the URL Throttlr provides.
+
+## Stay within limits effortlessly—try Throttlr today!
+
+# Goals
+- [ ] Users will get API keys on account creation
+- [ ] Users can register endpoints, receiving a throttled endpoint to replace their existing ones
+- [ ] Users can set rate limits for a given unit of time, when said limit is hit, we return HTTP 429 (Too many requests)
+- [ ] Users can self host *or* use our servers online
 
 <details>
   <summary><h2>Resources used</h2></summary>
