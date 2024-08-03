@@ -18,3 +18,13 @@
 - associated with endpoint
 ## Token bucket algorithm
 - own entity
+
+# Diagrams
+## API Key Generation
+![Sequence diagram (3)](https://github.com/user-attachments/assets/a50c4412-2313-4309-a432-d8e5582be93a)
+
+## Endpoint Registration
+![Sequence diagram (4)](https://github.com/user-attachments/assets/58974aa0-f15f-4e33-b136-ee8c67d3bf65)
+
+## Endpoint Throttling
+![Sequence diagram (5)](https://github.com/user-attachments/assets/b393595a-fd6e-4ab5-bd66-109fae137aa6)
