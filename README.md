@@ -19,7 +19,7 @@ Just register an endpoint with a limit, and Throttlr takes care of the rest. Whe
 ## Stay within limits effortlessly—try Throttlr today!
 
 # Goals
-- [ ] [Users will get API keys on account creation](https://github.com/Linkinlog/Throttlr/milestone/1)
+- [x] [Users will get API keys on account creation](https://github.com/Linkinlog/Throttlr/milestone/1)
 - [ ] [Users can register endpoints, receiving a throttled endpoint to replace their existing ones](https://github.com/Linkinlog/Throttlr/milestone/2)
 - [ ] [Users can set rate limits for a given unit of time, when said limit is hit, we return HTTP 429 (Too many requests)](https://github.com/Linkinlog/Throttlr/milestone/3)
 - [ ] [Users can self host *or* use our servers online
