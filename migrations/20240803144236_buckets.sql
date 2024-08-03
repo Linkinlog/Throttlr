@@ -1,15 +1,16 @@
 -- +goose Up
 -- +goose StatementBegin
-CrEaTe TABLE IF NOT EXISTS api_keys (
+CrEaTe TABLE IF NOT EXISTS buckets (
     id integer PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    key TEXT NOT NULL,
-    valid BOOLEAN NOT NULL DEFAULT FALSE,
+    endpoint_id integer NOT NULL,
+    max integer NOT NULL,
+    interval integer NOT NULL,
+    window_opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS api_keys;
+DROP TABLE IF EXISTS buckets;
 -- +goose StatementEnd

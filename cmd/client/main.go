@@ -14,16 +14,34 @@ import (
 )
 
 const (
-	port   = ":8080"
 	driver = "sqlite"
-	dsn    = "throttlr.db"
 )
+
+var (
+	port        = "8080"
+	dsn         = "throttlr.db"
+	env         = internal.DefaultEnv
+	callbackUrl = "http://localhost" + port
+)
+
+func init() {
+	if p, err := env.Get("CLIENT_PORT"); err == nil {
+		port = p
+	}
+	if d, err := env.Get("CLIENT_DB"); err == nil {
+		dsn = d
+	}
+
+	if url, err := env.Get("CALLBACK_URL"); err == nil {
+		callbackUrl = url + ":" + port
+	}
+}
 
 func main() {
 	s := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	s.Info("Server listening", "port", port)
 
-	if err := setupAuth(s); err != nil {
+	if err := setupAuth(); err != nil {
 		s.Error("failed to setup auth", "err", err)
 		return
 	}
@@ -42,18 +60,10 @@ func main() {
 	}
 
 	us := db.NewUserStore(sqlDb)
-	s.Error("main.go", "err", http.ListenAndServe(port, handlers.HandleClient(s, us, gs)))
+	s.Error("main.go", "err", http.ListenAndServe(":" + port, handlers.HandleClient(s, us, gs)))
 }
 
-func setupAuth(s *slog.Logger) error {
-	callbackUrl := "http://localhost" + port
-
-	env := internal.DefaultEnv
-	if env, _ := env.Get("ENV"); env == "prod" {
-		s.Info("Running in production mode")
-		callbackUrl = "https://throttlr.dahlton.org"
-	}
-
+func setupAuth() error {
 	if err := internal.SetupGothic(callbackUrl); err != nil {
 		return err
 	}
