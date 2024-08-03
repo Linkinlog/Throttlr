@@ -18,8 +18,9 @@ import (
 
 const (
 	apiRegenDisplay   = "Regeneration failed, please try again."
-	logoutDisplay     = "logout failed, please try again."
-	authFailedDisplay = "auth failed, please try again."
+	deleteDisplay     = "Delete failed, please try again."
+	logoutDisplay     = "Logout failed, please try again."
+	authFailedDisplay = "Auth failed, please try again."
 )
 
 var AuthError = errors.New("failed to authenticate user req")
@@ -63,6 +64,12 @@ func logHandler(l *slog.Logger, gs sessions.Store, h HandlerErrorFunc) http.Hand
 func handleDelete(us *db.UserStore) HandlerErrorFunc {
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		user := models.UserFromCtx(r.Context())
+		if user.Id == "" {
+			return &httpError{
+				error:   errors.New("attempted to delete a non existent user"),
+				display: deleteDisplay,
+			}
+		}
 		err := us.Delete(r.Context(), user.Id)
 		if err != nil {
 			return &httpError{
@@ -79,6 +86,12 @@ func handleDelete(us *db.UserStore) HandlerErrorFunc {
 func handleRegenKey(us *db.UserStore, gs sessions.Store) HandlerErrorFunc {
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		user := models.UserFromCtx(r.Context())
+		if user.Id == "" {
+			return &httpError{
+				error:   errors.New("user not found and attempted to regen api key"),
+				display: apiRegenDisplay,
+			}
+		}
 		key, err := us.RegenerateApiKey(r.Context(), user)
 		if err != nil {
 			return &httpError{
