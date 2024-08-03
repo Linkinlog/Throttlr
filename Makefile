@@ -9,6 +9,8 @@ server: server.build
 
 migrate:
 	@goose -dir migrations sqlite ./throttlr.db up
+migrate.fresh:
+	@goose -dir migrations sqlite ./throttlr.db redo
 
 dev: gen
 	@go run ./cmd/client/main.go

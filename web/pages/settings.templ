@@ -3,7 +3,6 @@ package pages
 import "github.com/linkinlog/throttlr/web/shared"
 import "github.com/linkinlog/throttlr/internal/models"
 import "github.com/linkinlog/throttlr/web/partials"
-import "github.com/linkinlog/throttlr/internal/services"
 
 func NewSettings() settings {
 	return settings{}
@@ -31,7 +30,7 @@ templ (s settings) View() {
 			<p class="text-secondary text-2xl">{ models.UserFromCtx(ctx).Name }</p>
 		</section>
 		<section class="my-4">
-			@partials.HiddenDisplayBlock(services.ApiKeyForUserId(models.UserFromCtx(ctx).Name), "API Key")
+			@partials.HiddenDisplayBlock(models.UserFromCtx(ctx).ApiKey.String(), "API Key")
 		</section>
 	</section>
 }

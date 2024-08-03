@@ -4,6 +4,7 @@ go 1.22.2
 
 require (
 	github.com/a-h/templ v0.2.663
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.1.1
 	github.com/markbates/goth v1.79.0
 	github.com/stretchr/testify v1.9.0
@@ -16,7 +17,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect

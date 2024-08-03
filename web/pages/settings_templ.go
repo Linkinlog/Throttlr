@@ -13,7 +13,6 @@ import "bytes"
 import "github.com/linkinlog/throttlr/web/shared"
 import "github.com/linkinlog/throttlr/internal/models"
 import "github.com/linkinlog/throttlr/web/partials"
-import "github.com/linkinlog/throttlr/internal/services"
 
 func NewSettings() settings {
 	return settings{}
@@ -55,7 +54,7 @@ func (s settings) View() templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(models.UserFromCtx(ctx).Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/settings.templ`, Line: 31, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/settings.templ`, Line: 30, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -65,7 +64,7 @@ func (s settings) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.HiddenDisplayBlock(services.ApiKeyForUserId(models.UserFromCtx(ctx).Name), "API Key").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = partials.HiddenDisplayBlock(models.UserFromCtx(ctx).ApiKey.String(), "API Key").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

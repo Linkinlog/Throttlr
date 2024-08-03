@@ -61,7 +61,6 @@ func logHandler(l *slog.Logger, gs sessions.Store, h HandlerErrorFunc) http.Hand
 func handleDelete(us *db.UserStore) HandlerErrorFunc {
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		user := models.UserFromCtx(r.Context())
-		fmt.Println(user)
 		err := us.Delete(r.Context(), user.Id)
 		if err != nil {
 			return &httpError{

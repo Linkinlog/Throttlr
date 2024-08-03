@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 )
 
@@ -63,11 +64,15 @@ func UserFromSession(r *http.Request, gs sessions.Store) (User, error) {
 }
 
 func NewUser() *User {
-	return &User{}
+	apiKey := uuid.New()
+	return &User{
+		ApiKey: apiKey,
+	}
 }
 
 type User struct {
 	Id, Name, Email string
+	ApiKey          uuid.UUID
 }
 
 func (u *User) SetName(name string) *User {
