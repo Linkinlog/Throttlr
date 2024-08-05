@@ -33,7 +33,7 @@ func init() {
 	}
 
 	if url, err := env.Get("CALLBACK_URL"); err == nil {
-		callbackUrl = url + ":" + port
+		callbackUrl = url
 	}
 }
 
