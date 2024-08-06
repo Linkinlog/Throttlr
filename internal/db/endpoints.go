@@ -28,6 +28,20 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint) (int, er
 		return 0, err
 	}
 
+	// not a huge fan of any of this but it works for now
+	for {
+		var exists bool
+		err := es.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT throttlr_url FROM endpoints WHERE throttlr_url = ?)", e.OriginalUrl, e.ApiKey).Scan(&exists)
+		if err != nil {
+			return 0, err
+		}
+		if exists {
+			e.ThrottlrPath = models.GeneratePath()
+		} else {
+			break
+		}
+	}
+
 	var id int
 	err = tx.QueryRowContext(ctx, "INSERT INTO endpoints (api_key_id, original_url, throttlr_url) VALUES (?, ?, ?) Returning id", key, e.OriginalUrl, e.ThrottlrPath).Scan(&id)
 	if err != nil {
@@ -37,8 +51,19 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint) (int, er
 	return id, tx.Commit()
 }
 
-func (es *EndpointStore) Exists(ctx context.Context, endpoint *models.Endpoint) (bool, error) {
+func (es *EndpointStore) ExistsByOriginal(ctx context.Context, endpoint *models.Endpoint, apiKeyId int) (bool, error) {
 	var exists bool
-	err := es.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT id FROM endpoints WHERE original_url = ?)", endpoint.OriginalUrl).Scan(&exists)
+	err := es.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT id FROM endpoints WHERE original_url = ? and api_key_id = ?)", endpoint.OriginalUrl, apiKeyId).Scan(&exists)
 	return exists, err
+}
+
+func (es *EndpointStore) ExistsByThrottlr(ctx context.Context, endpoint *models.Endpoint, apiKeyId int) (bool, error) {
+	var exists bool
+	err := es.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT id FROM endpoints WHERE throttlr_url = ? and api_key_id = ?)", endpoint.ThrottlrPath, apiKeyId).Scan(&exists)
+	return exists, err
+}
+
+func (es *EndpointStore) Fill(ctx context.Context, endpoint *models.Endpoint, apiKeyId int) error {
+	err := es.db.QueryRowContext(ctx, "SELECT api_key_id, original_url FROM endpoints WHERE throttlr_url = ? and api_key_id = ?", endpoint.ThrottlrPath, apiKeyId).Scan(&endpoint.ApiKey, &endpoint.OriginalUrl)
+	return err
 }

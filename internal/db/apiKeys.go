@@ -10,9 +10,19 @@ type KeyStore struct {
 	db *sql.DB
 }
 
-func (ks *KeyStore) Valid(key string) bool {
+func (ks *KeyStore) Exists(key string) (bool, int) {
+	var exists bool
+	var id int
+	_ = ks.db.QueryRow("SELECT EXISTS(SELECT id FROM api_keys WHERE key = ?)", key).Scan(&exists)
+	if exists {
+		_ = ks.db.QueryRow("SELECT id FROM api_keys WHERE key = ?", key).Scan(&id)
+	}
+	return exists, id
+}
+
+func (ks *KeyStore) Valid(id int) bool {
 	var valid bool
-	_ = ks.db.QueryRow("SELECT valid FROM api_keys WHERE key = ?", key).Scan(&valid)
+	_ = ks.db.QueryRow("SELECT valid FROM api_keys WHERE id = ?", id).Scan(&valid)
 	return valid
 }
 

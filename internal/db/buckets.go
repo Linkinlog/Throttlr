@@ -16,7 +16,6 @@ type BucketStore struct{ db *sql.DB }
 type BucketModel struct {
 	Id         int
 	EndpointId int
-	createdAt  int64
 	*models.Bucket
 }
 

@@ -60,7 +60,7 @@ func main() {
 	}
 
 	us := db.NewUserStore(sqlDb)
-	s.Error("main.go", "err", http.ListenAndServe(":" + port, handlers.HandleClient(s, us, gs)))
+	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleClient(s, us, gs)))
 }
 
 func setupAuth() error {

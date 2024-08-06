@@ -23,7 +23,7 @@ var (
 
 func init() {
 	if p, err := env.Get("SERVER_PORT"); err == nil {
-		port =  p
+		port = p
 	}
 	if d, err := env.Get("SERVER_DB"); err == nil {
 		dsn = d
@@ -47,5 +47,5 @@ func main() {
 
 	bStore := db.NewBucketStore(sqlDb)
 
-s.Error("main.go", "err", http.ListenAndServe(":" + port, handlers.HandleServer(s, kStore, epStore, bStore)))
+	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleServer(s, kStore, epStore, bStore)))
 }
