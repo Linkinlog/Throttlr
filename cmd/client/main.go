@@ -25,9 +25,6 @@ var (
 )
 
 func init() {
-	if p, err := env.Get("CLIENT_PORT"); err == nil {
-		port = p
-	}
 	if d, err := env.Get("CLIENT_DB"); err == nil {
 		dsn = d
 	}

@@ -27,3 +27,7 @@ type Endpoint struct {
 	OriginalUrl  string
 	ThrottlrPath string
 }
+
+func (e *Endpoint) String() string {
+	return fmt.Sprintf("%s %s", e.OriginalUrl, e.ThrottlrPath)
+}

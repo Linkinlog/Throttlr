@@ -13,6 +13,26 @@ func NewEndpointStore(db *sql.DB) *EndpointStore {
 
 type EndpointStore struct{ db *sql.DB }
 
+func (es *EndpointStore) AllForKey(ctx context.Context, apiKeyId int) ([]*models.Endpoint, error) {
+	rows, err := es.db.QueryContext(ctx, "SELECT original_url, throttlr_url FROM endpoints JOIN api_keys on api_keys.id = ? where api_keys.valid = true", apiKeyId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var endpoints []*models.Endpoint
+	for rows.Next() {
+		e := &models.Endpoint{}
+		err := rows.Scan(&e.OriginalUrl, &e.ThrottlrPath)
+		if err != nil {
+			return nil, err
+		}
+		endpoints = append(endpoints, e)
+	}
+
+	return endpoints, nil
+}
+
 func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint) (int, error) {
 	tx, err := es.db.BeginTx(ctx, nil)
 	if err != nil {

@@ -4,9 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"github.com/gorilla/sessions"
 	"github.com/linkinlog/throttlr/assets"
+	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
 	"github.com/linkinlog/throttlr/web/pages"
@@ -23,6 +26,10 @@ func HandleClient(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.Ser
 	m.Handle("GET /sign-in", withUser(handleView(shared.NewLayout(pages.NewAuth(true), ""), l), gs))
 	m.Handle("GET /docs", withUser(handleView(shared.NewLayout(pages.NewWip(), ""), l), gs))
 	m.Handle("GET /settings", withUser(handleView(shared.NewLayout(pages.NewSettings(), ""), l), gs))
+
+	m.Handle("GET /endpoints", withUser(handleView(shared.NewLayout(pages.NewEndpointForm(), ""), l), gs))
+	m.Handle("GET /views/endpoints", proxyToServer())
+	m.Handle("POST /register/{apiKey}", proxyToServer())
 
 	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, us, gs)))
 
@@ -41,6 +48,23 @@ func HandleClient(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.Ser
 	})
 
 	return m
+}
+
+func proxyToServer() http.HandlerFunc {
+	callbackUrl := "http://host.docker.internal:8081"
+	if url, err := internal.DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
+		callbackUrl = url
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		u, err := url.Parse(callbackUrl)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		proxy := httputil.NewSingleHostReverseProxy(u)
+		proxy.ServeHTTP(w, r)
+	}
 }
 
 func withUser(next http.HandlerFunc, gs sessions.Store) http.HandlerFunc {

@@ -1,0 +1,22 @@
+package partials
+
+import "github.com/linkinlog/throttlr/internal/models"
+
+templ Endpoints(e []*models.Endpoint) {
+	<table class="table-auto w-full text-secondary">
+		<thead class="bg-primary">
+			<tr class="text-dark">
+				<th>Original URL</th>
+				<th>Throttlr Path</th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, endpoint := range e {
+				<tr class="border-b-2 border-primary">
+					<td>{ endpoint.OriginalUrl }</td>
+					<td>/endpoints/{ endpoint.ThrottlrPath }</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}

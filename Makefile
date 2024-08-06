@@ -8,9 +8,9 @@ server: server.build
 	@docker run -it --rm -p 8081:8081 server
 
 migrate:
-	@goose -dir migrations sqlite ./throttlr.db up
+	@goose -dir migrations sqlite ./build/db-data/throttlr.db up
 migrate.fresh:
-	@goose -dir migrations sqlite ./throttlr.db redo
+	@goose -dir migrations sqlite ./build/db-data/throttlr.db redo
 
 dev: gen
 	@go run ./cmd/client/main.go

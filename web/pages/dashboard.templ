@@ -1,6 +1,10 @@
 package pages
 
-import "github.com/linkinlog/throttlr/web/shared"
+import (
+	"fmt"
+	"github.com/linkinlog/throttlr/web/shared"
+	"github.com/linkinlog/throttlr/internal/models"
+)
 
 func NewDashboard() dashboard {
 	return dashboard{}
@@ -16,6 +20,8 @@ func (d dashboard) Props() shared.PageProps {
 
 templ (d dashboard) View() {
 	<section class="mt-4">
-		<button class="bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight">+</button>
+		<a href="/endpoints"><button class="bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight">+</button></a>
+	</section>
+	<section class="mt-4" hx-get="/views/endpoints" hx-trigger="load" hx-vals={ fmt.Sprintf("{\"apiKey\": \"%s\"}", models.UserFromCtx(ctx).ApiKey) }>
 	</section>
 }

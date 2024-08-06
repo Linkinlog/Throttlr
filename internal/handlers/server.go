@@ -10,9 +10,11 @@ import (
 
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
+	"github.com/linkinlog/throttlr/web/partials"
 )
 
 var (
+	MissingAPIKey         = errors.New("missing API key")
 	InvalidAPIKey         = errors.New("invalid API key")
 	InvalidEndpointValues = errors.New("invalid endpoint values")
 	EndpointExists        = errors.New("endpoint already exists")
@@ -35,8 +37,37 @@ func HandleServer(l *slog.Logger, ks *db.KeyStore, es *db.EndpointStore, bs *db.
 
 	m.Handle("POST /register/{apiKey}", apiLogHandler(l, registerEndpoint(ks, es, bs)))
 	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, proxyEndpoint(ks, es)))
+	m.Handle("GET /views/endpoints", apiLogHandler(l, handleEndpoints(es, ks)))
 
 	return m
+}
+
+func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
+	return func(w http.ResponseWriter, r *http.Request) *httpError {
+		key := r.URL.Query().Get("apiKey")
+
+		if key == "" {
+			return &httpError{InvalidAPIKey, "No API key"}
+		}
+
+		exists, apiKeyId := ks.Exists(key)
+		if !exists {
+			return &httpError{InvalidAPIKey, "No API key"}
+		}
+
+		if !ks.Valid(apiKeyId) {
+			return &httpError{InvalidAPIKey, "Invalid API key"}
+		}
+
+		endpoints, err := es.AllForKey(r.Context(), apiKeyId)
+		if err != nil {
+			return &httpError{err, "failed to get endpoints"}
+		}
+
+		partials.Endpoints(endpoints).Render(r.Context(), w)
+
+		return nil
+	}
 }
 
 func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
@@ -44,7 +75,7 @@ func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
 		key := r.URL.Query().Get("key")
 		exists, apiKeyId := ks.Exists(key)
 		if !exists {
-			return &httpError{InvalidAPIKey, "No API key"}
+			return &httpError{MissingAPIKey, "No API key"}
 		}
 		if !ks.Valid(apiKeyId) {
 			return &httpError{InvalidAPIKey, "Invalid API key"}
@@ -84,6 +115,7 @@ func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
 
 func modifyRequest(r *http.Request, originalUrl *url.URL) {
 	r.URL = originalUrl
+	r.Host = originalUrl.Host
 }
 
 func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore) HandlerErrorFunc {
@@ -104,6 +136,15 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 		interval, _ := strconv.Atoi(r.FormValue("interval"))
 		endpoint := r.FormValue("endpoint")
 
+		u, err := url.Parse(endpoint)
+		if err != nil {
+			return &httpError{err, "failed to parse endpoint"}
+		}
+
+		if u.Scheme == "" || u.Host == "" {
+			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+		}
+
 		if maxTokens == 0 || interval == 0 || endpoint == "" {
 			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
 		}
@@ -117,13 +158,13 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			}
 		}
 
-		apiKeyId, err := es.Store(r.Context(), e)
+		endpointId, err := es.Store(r.Context(), e)
 		if err != nil {
 			return &httpError{err, "failed to store endpoint"}
 		}
 
 		b := models.NewBucket(e, models.Interval(interval), maxTokens)
-		bDb := db.BucketModel{Bucket: b, EndpointId: apiKeyId}
+		bDb := db.BucketModel{Bucket: b, EndpointId: endpointId}
 		if exists, err := bs.Exists(r.Context(), bDb); exists {
 			if err != nil {
 				return &httpError{err, "failed to check if bucket exists"}
@@ -137,9 +178,16 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			return &httpError{err, "failed to store bucket"}
 		}
 
+		response := r.Host + "/endpoints/" + e.ThrottlrPath
+
+		if r.Header.Get("Hx-Request") == "true" {
+			response = "Success! Endpoint registered at " + response
+		}
+
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write([]byte(r.Host + "/endpoints/" + e.ThrottlrPath))
+
+		_, err = w.Write([]byte(response))
 		if err != nil {
 			return &httpError{err, "failed to write response"}
 		}
