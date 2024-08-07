@@ -38,3 +38,10 @@ func (ks *KeyStore) IdFromKey(key string) (string, error) {
 	err := ks.db.QueryRow(ctx, "SELECT id FROM api_keys WHERE key = $1", key).Scan(&id)
 	return id, err
 }
+
+func (ks *KeyStore) UserIdFromKey(key string) (string, error) {
+	ctx := context.Background()
+	var id string
+	err := ks.db.QueryRow(ctx, "SELECT user_id FROM api_keys WHERE key = $1 and valid = true", key).Scan(&id)
+	return id, err
+}

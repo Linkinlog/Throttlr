@@ -15,7 +15,7 @@ import (
 	"github.com/linkinlog/throttlr/internal/models"
 )
 
-func Endpoints(host string, e []*models.Endpoint) templ.Component {
+func Endpoints(host, key string, e []*models.Endpoint) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -50,7 +50,7 @@ func Endpoints(host string, e []*models.Endpoint) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 templ.SafeURL = templ.URL(fmt.Sprintf("%s/endpoints/%s?key=%s", host, endpoint.ThrottlrPath, endpoint.ApiKey))
+			var templ_7745c5c3_Var3 templ.SafeURL = templ.URL(fmt.Sprintf("%s/endpoints/%s?key=%s", host, endpoint.ThrottlrPath, key))
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var3)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -62,7 +62,7 @@ func Endpoints(host string, e []*models.Endpoint) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/partials/endpoints.templ`, Line: 21, Col: 206}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/partials/endpoints.templ`, Line: 21, Col: 194}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {

@@ -15,13 +15,12 @@ type BucketStore struct{ db *pgx.Conn }
 
 type BucketModel struct {
 	Id         int
-	EndpointId int
 	*models.Bucket
 }
 
 func (bs *BucketStore) Exists(ctx context.Context, bucket BucketModel) (bool, error) {
 	var exists bool
-	err := bs.db.QueryRow(ctx, "SELECT EXISTS(SELECT id from buckets where endpoint_id = $1)", bucket.EndpointId).Scan(&exists)
+	err := bs.db.QueryRow(ctx, "SELECT EXISTS(SELECT id from buckets where id = $1)", bucket.Id).Scan(&exists)
 	return exists, err
 }
 
@@ -35,7 +34,7 @@ func (bs *BucketStore) Store(ctx context.Context, b BucketModel) (int, error) {
 	}()
 
 	var id int
-	err = tx.QueryRow(ctx, "INSERT INTO buckets (max, interval, endpoint_id) VALUES ($1, $2, $3) Returning id", b.Max, b.Interval, b.EndpointId).Scan(&id)
+	err = tx.QueryRow(ctx, "INSERT INTO buckets (max, interval) VALUES ($1, $2) Returning id", b.Max, b.Interval).Scan(&id)
 	if err != nil {
 		return 0, err
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httputil"
@@ -60,7 +61,12 @@ func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
 			return &httpError{InvalidAPIKey, "Invalid API key"}
 		}
 
-		endpoints, err := es.AllForKey(r.Context(), apiKeyId)
+		userId, err := ks.UserIdFromKey(key)
+		if err != nil {
+			return &httpError{err, "failed to get user from key"}
+		}
+
+		endpoints, err := es.AllForUser(r.Context(), userId)
 		if err != nil {
 			return &httpError{err, "failed to get endpoints"}
 		}
@@ -70,7 +76,7 @@ func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
 			callbackUrl = url
 		}
 
-		err = partials.Endpoints(callbackUrl, endpoints).Render(r.Context(), w)
+		err = partials.Endpoints(callbackUrl, key, endpoints).Render(r.Context(), w)
 		if err != nil {
 			return &httpError{err, "failed to render endpoints"}
 		}
@@ -90,10 +96,15 @@ func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
 			return &httpError{InvalidAPIKey, "Invalid API key"}
 		}
 
+		userId, err := ks.UserIdFromKey(key)
+		if err != nil {
+			return &httpError{err, "failed to get user from key"}
+		}
+
 		throttlrPath := r.PathValue("throttlrPath")
 
 		e := &models.Endpoint{ThrottlrPath: throttlrPath}
-		if exists, err := es.ExistsByThrottlr(r.Context(), e, apiKeyId); !exists {
+		if exists, err := es.ExistsByThrottlr(r.Context(), e, userId); !exists {
 			if err != nil {
 				return &httpError{err, "failed to check if endpoint exists"}
 			} else {
@@ -101,7 +112,7 @@ func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
 			}
 		}
 
-		if err := es.Fill(r.Context(), e, apiKeyId); err != nil {
+		if err := es.Fill(r.Context(), e, userId); err != nil {
 			return &httpError{err, "failed to fill endpoint"}
 		}
 
@@ -158,22 +169,8 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
 		}
 
-		e := models.NewEndpoint(key, endpoint)
-		if exists, err := es.ExistsByOriginal(r.Context(), e, apiKeyId); exists {
-			if err != nil {
-				return &httpError{err, "failed to check if endpoint exists"}
-			} else {
-				return &httpError{EndpointExists, "Endpoint already exists"}
-			}
-		}
-
-		endpointId, err := es.Store(r.Context(), e)
-		if err != nil {
-			return &httpError{err, "failed to store endpoint"}
-		}
-
-		b := models.NewBucket(e, models.Interval(interval), maxTokens)
-		bDb := db.BucketModel{Bucket: b, EndpointId: endpointId}
+		b := models.NewBucket(models.Interval(interval), maxTokens)
+		bDb := db.BucketModel{Bucket: b}
 		if exists, err := bs.Exists(r.Context(), bDb); exists {
 			if err != nil {
 				return &httpError{err, "failed to check if bucket exists"}
@@ -182,19 +179,38 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			}
 		}
 
-		_, err = bs.Store(r.Context(), bDb)
+		bucketId, err := bs.Store(r.Context(), bDb)
 		if err != nil {
 			return &httpError{err, "failed to store bucket"}
+		}
+
+		userId, err := ks.UserIdFromKey(key)
+		if err != nil {
+			return &httpError{err, "failed to get user from key"}
+		}
+
+		e := models.NewEndpoint(endpoint)
+		if exists, err := es.ExistsByOriginal(r.Context(), e, userId); exists {
+			if err != nil {
+				return &httpError{err, "failed to check if endpoint exists"}
+			} else {
+				return &httpError{EndpointExists, "Endpoint already exists"}
+			}
+		}
+
+		_, err = es.Store(r.Context(), e, userId, bucketId)
+		if err != nil {
+			return &httpError{err, "failed to store endpoint"}
 		}
 
 		callbackUrl := "http://localhost:8091"
 		if url, err := internal.DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
 			callbackUrl = url
 		}
-		response := callbackUrl + "/endpoints/" + e.ThrottlrPath + "?key=" + e.ApiKey
+		response := callbackUrl + "/endpoints/" + e.ThrottlrPath + "?key=" + key
 
 		if r.Header.Get("Hx-Request") == "true" {
-			response = "Success! Endpoint registered at " + response
+			response = fmt.Sprintf("Success! Endpoint registered at <a href='%s' target='_blank'>%s</a>", response, response)
 		}
 
 		w.Header().Set("Content-Type", "text/plain")

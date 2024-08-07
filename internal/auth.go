@@ -39,7 +39,7 @@ func SetupGothic(callbackUrl string) error {
 	}
 
 	goth.UseProviders(
-		github.New(ghKey, ghSecret, callbackUrl+"/auth/github/callback"),
+		github.New(ghKey, ghSecret, callbackUrl+"/auth/github/callback", "user:email"),
 		google.New(gk, gs, callbackUrl+"/auth/google/callback", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"),
 	)
 

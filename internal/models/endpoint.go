@@ -14,16 +14,14 @@ func GeneratePath() string {
 	return fmt.Sprintf("%X", bytes)
 }
 
-func NewEndpoint(apiKey, originalUrl string) *Endpoint {
+func NewEndpoint(originalUrl string) *Endpoint {
 	return &Endpoint{
-		ApiKey:       apiKey,
 		OriginalUrl:  originalUrl,
 		ThrottlrPath: GeneratePath(),
 	}
 }
 
 type Endpoint struct {
-	ApiKey       string
 	OriginalUrl  string
 	ThrottlrPath string
 }
