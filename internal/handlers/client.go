@@ -50,7 +50,7 @@ func HandleClient(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.Ser
 }
 
 func proxyToServer() http.HandlerFunc {
-	callbackUrl := "http://host.docker.internal:8081"
+	callbackUrl := "http://server:8081"
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, err := url.Parse(callbackUrl)
 		if err != nil {
