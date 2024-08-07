@@ -54,6 +54,10 @@ func AuthenticateUserRequest(
 ) error {
 	u, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
+		rErr := models.RemoveUserFromSession(r, w, gs)
+		if rErr != nil {
+			return fmt.Errorf("failed to remove user from session, %w, previous error: %w", rErr, err)
+		}
 		return err
 	}
 	uId := fmt.Sprintf("%s-%s", u.UserID, u.Provider)
