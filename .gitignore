@@ -21,6 +21,8 @@
 # Go workspace file
 go.work
 .env
+db.env
+export.sh
 
 tmp/
 

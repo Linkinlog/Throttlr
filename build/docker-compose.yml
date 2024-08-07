@@ -3,22 +3,63 @@ services:
     build:
       context: ..
       dockerfile: build/Dockerfile.client
+    restart: always
     ports:
       - "8080:8080"
     env_file:
       - ../.env
-    volumes:
-      - ./db-data:/root/db
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://host.docker.internal:8080"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
   server:
     build:
       context: ..
       dockerfile: build/Dockerfile.server
+    restart: always
     ports:
       - "8081:8081"
     env_file:
       - ../.env
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://host.docker.internal:8081"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    user: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ./db-data:/root/db
+      - db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8090:8080
 volumes:
   db-data:
-

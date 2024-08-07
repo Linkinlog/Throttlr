@@ -12,10 +12,6 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/client/main.go
 
-RUN go install github.com/pressly/goose/v3/cmd/goose@latest
-
-RUN goose -dir migrations sqlite /app/build/db-data/throttlr.db up
-
 FROM alpine:latest
 
 WORKDIR /root/

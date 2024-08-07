@@ -22,6 +22,5 @@ templ (d dashboard) View() {
 	<section class="mt-4">
 		<a href="/endpoints"><button class="bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight">+</button></a>
 	</section>
-	<section class="mt-4" hx-get="/views/endpoints" hx-trigger="load" hx-vals={ fmt.Sprintf("{\"apiKey\": \"%s\"}", models.UserFromCtx(ctx).ApiKey) }>
-	</section>
+	<section class="mt-4" hx-get="/views/endpoints" hx-trigger="load" hx-vals={ fmt.Sprintf("{\"apiKey\": \"%s\"}", models.UserFromCtx(ctx).ApiKey) }></section>
 }

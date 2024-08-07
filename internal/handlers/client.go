@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/linkinlog/throttlr/assets"
-	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
 	"github.com/linkinlog/throttlr/web/pages"
@@ -52,9 +51,6 @@ func HandleClient(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.Ser
 
 func proxyToServer() http.HandlerFunc {
 	callbackUrl := "http://host.docker.internal:8081"
-	if url, err := internal.DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
-		callbackUrl = url
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, err := url.Parse(callbackUrl)
 		if err != nil {

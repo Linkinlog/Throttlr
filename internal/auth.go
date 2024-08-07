@@ -1,12 +1,12 @@
 package internal
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
 	"github.com/markbates/goth"
@@ -59,11 +59,11 @@ func AuthenticateUserRequest(
 	uId := fmt.Sprintf("%s-%s", u.UserID, u.Provider)
 	usr, err := us.ById(r.Context(), uId)
 
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		usr = models.NewUser().
 			SetId(uId).
 			SetName(u.Name).

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
 	"github.com/linkinlog/throttlr/web/partials"
@@ -64,7 +65,10 @@ func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
 			return &httpError{err, "failed to get endpoints"}
 		}
 
-		partials.Endpoints(endpoints).Render(r.Context(), w)
+		err = partials.Endpoints(endpoints).Render(r.Context(), w)
+		if err != nil {
+			return &httpError{err, "failed to render endpoints"}
+		}
 
 		return nil
 	}
@@ -178,7 +182,11 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			return &httpError{err, "failed to store bucket"}
 		}
 
-		response := r.Host + "/endpoints/" + e.ThrottlrPath
+		callbackUrl := "http://localhost:8081"
+		if url, err := internal.DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
+			callbackUrl = url
+		}
+		response := callbackUrl + "/endpoints/" + e.ThrottlrPath + "?key=" + e.ApiKey
 
 		if r.Header.Get("Hx-Request") == "true" {
 			response = "Success! Endpoint registered at " + response

@@ -1,25 +1,22 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/sessions"
+	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/handlers"
 )
 
-const (
-	driver = "sqlite"
-)
-
 var (
 	port        = "8080"
-	dsn         = "throttlr.db"
+	dsn         = "postgres://username:password@localhost:5432/database_name"
 	env         = internal.DefaultEnv
 	callbackUrl = "http://localhost" + port
 )
@@ -43,12 +40,12 @@ func main() {
 		return
 	}
 
-	sqlDb, err := sql.Open(driver, dsn)
+	sqlDb, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
 		s.Error("failed to open database", "err", err)
 		return
 	}
-	defer sqlDb.Close()
+	defer sqlDb.Close(context.Background())
 
 	gs, err := setupSessions()
 	if err != nil {

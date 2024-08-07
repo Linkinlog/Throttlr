@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CrEaTe TABLE IF NOT EXISTS buckets (
-    id integer PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     endpoint_id integer NOT NULL,
     max integer NOT NULL,
     interval integer NOT NULL,
