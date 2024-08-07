@@ -65,7 +65,12 @@ func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
 			return &httpError{err, "failed to get endpoints"}
 		}
 
-		err = partials.Endpoints(endpoints).Render(r.Context(), w)
+		callbackUrl := "http://localhost:8091"
+		if url, err := internal.DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
+			callbackUrl = url
+		}
+
+		err = partials.Endpoints(callbackUrl, endpoints).Render(r.Context(), w)
 		if err != nil {
 			return &httpError{err, "failed to render endpoints"}
 		}
@@ -182,7 +187,7 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			return &httpError{err, "failed to store bucket"}
 		}
 
-		callbackUrl := "http://localhost:8081"
+		callbackUrl := "http://localhost:8091"
 		if url, err := internal.DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
 			callbackUrl = url
 		}

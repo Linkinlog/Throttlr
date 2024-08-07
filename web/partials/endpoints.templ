@@ -1,9 +1,12 @@
 package partials
 
-import "github.com/linkinlog/throttlr/internal/models"
+import (
+	"github.com/linkinlog/throttlr/internal/models"
+	"fmt"
+)
 
-templ Endpoints(e []*models.Endpoint) {
-	<table class="table-auto w-full text-secondary">
+templ Endpoints(host string, e []*models.Endpoint) {
+	<table class="table-auto w-full text-secondary text-center">
 		<thead class="bg-primary">
 			<tr class="text-dark">
 				<th>Original URL</th>
@@ -12,9 +15,9 @@ templ Endpoints(e []*models.Endpoint) {
 		</thead>
 		<tbody>
 			for _, endpoint := range e {
-				<tr class="border-b-2 border-primary">
+				<tr class="border-b-2 border-primary text-sm md:text-base">
 					<td>{ endpoint.OriginalUrl }</td>
-					<td>/endpoints/{ endpoint.ThrottlrPath }</td>
+					<td><a class="ml-8" href={ templ.URL(fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath)) }>{ fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath) }</a></td>
 				</tr>
 			}
 		</tbody>

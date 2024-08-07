@@ -37,4 +37,7 @@ lint: gen
 	@gofumpt -d -w .
 	@golangci-lint run
 
+docker: gen
+	@docker-compose up --build
+
 .PHONY: client.build client server.build server dev gen test lint
