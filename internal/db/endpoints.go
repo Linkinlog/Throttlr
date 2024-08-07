@@ -14,7 +14,7 @@ func NewEndpointStore(db *pgx.Conn) *EndpointStore {
 type EndpointStore struct{ db *pgx.Conn }
 
 func (es *EndpointStore) AllForKey(ctx context.Context, apiKeyId int) ([]*models.Endpoint, error) {
-	rows, err := es.db.Query(ctx, "SELECT original_url, throttlr_url FROM endpoints JOIN api_keys on api_keys.id = $1 where api_keys.valid = true", apiKeyId)
+	rows, err := es.db.Query(ctx, "SELECT original_url, throttlr_url, key FROM endpoints JOIN api_keys on api_keys.id = $1 where api_keys.valid = true", apiKeyId)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (es *EndpointStore) AllForKey(ctx context.Context, apiKeyId int) ([]*models
 	var endpoints []*models.Endpoint
 	for rows.Next() {
 		e := &models.Endpoint{}
-		err := rows.Scan(&e.OriginalUrl, &e.ThrottlrPath)
+		err := rows.Scan(&e.OriginalUrl, &e.ThrottlrPath, &e.ApiKey)
 		if err != nil {
 			return nil, err
 		}

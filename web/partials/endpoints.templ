@@ -6,6 +6,7 @@ import (
 )
 
 templ Endpoints(host string, e []*models.Endpoint) {
+	<p class="text-xs text-secondary">All of the links below will include your API key.</p>
 	<table class="table-auto w-full text-secondary text-center">
 		<thead class="bg-primary">
 			<tr class="text-dark">
@@ -17,7 +18,7 @@ templ Endpoints(host string, e []*models.Endpoint) {
 			for _, endpoint := range e {
 				<tr class="border-b-2 border-primary text-sm md:text-base">
 					<td>{ endpoint.OriginalUrl }</td>
-					<td><a class="ml-8" href={ templ.URL(fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath)) }>{ fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath) }</a></td>
+					<td><a class="ml-8" target="_blank" href={ templ.URL(fmt.Sprintf("%s/endpoints/%s?key=%s", host, endpoint.ThrottlrPath, endpoint.ApiKey)) }>{ fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath) }</a></td>
 				</tr>
 			}
 		</tbody>
