@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
@@ -93,7 +94,12 @@ func (u *User) SetId(userId string) *User {
 func (u *User) SaveToSession(r *http.Request, w http.ResponseWriter, gs sessions.Store) error {
 	sess, err := gs.Get(r, sessionName)
 	if err != nil {
-		return err
+		// https://github.com/gorilla/sessions/issues/16#issuecomment-143642144
+		if !strings.Contains(err.Error(), "securecookie: the value is not valid") {
+			return err
+		} else {
+			sess, _ = gs.New(r, sessionName)
+		}
 	}
 	sess.Values[UserCtxKey] = u
 	err = gs.Save(r, w, sess)
