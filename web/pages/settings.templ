@@ -18,24 +18,30 @@ func (s settings) Props() shared.PageProps {
 
 templ (s settings) View() {
 	<section class="mt-4">
-		<section class="flex justify-between items-center">
-			<form
-				action="/auth/delete"
-				onsubmit="return confirm('Do you really want to delete? This will delete your entire account.');"
-			>
-				<button class="bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center">
-					@deleteBtn()
-				</button>
-			</form>
-			<p class="text-secondary text-2xl">{ models.UserFromCtx(ctx).Name }</p>
+		<section>
+			<p class="text-secondary text-2xl text-center">{ models.UserFromCtx(ctx).Name }</p>
+			<p class="text-secondary text-xs text-center">{ models.UserFromCtx(ctx).Email }</p>
 		</section>
 		<section class="my-4">
-			@partials.HiddenDisplayBlock(models.UserFromCtx(ctx).ApiKey.String(), "API Key")
+			<h2 class="text-secondary text-2xl">API Key</h2>
+			@partials.HiddenDisplayBlock(models.UserFromCtx(ctx).ApiKey.String(), "")
 		</section>
 		<section>
-			<ul>
-				<li class="flex justify-between items-center mb-2">
-					<p class="text-secondary text-2xl">Regenerate Your API Key</p>
+			<h2 class="text-red-500 text-2xl">Danger Zone</h2>
+			<ul class="border border-secondary rounded">
+				<li class="flex justify-between items-center mb-2 border-b border-secondary py-8 mx-4">
+					<p class="text-secondary xl:text-xl">Delete Your Account</p>
+					<form
+						action="/auth/delete"
+						onsubmit="return confirm('Do you really want to delete? This will delete your entire account.');"
+					>
+						<button class="bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center">
+							@deleteBtn()
+						</button>
+					</form>
+				</li>
+				<li class="flex justify-between items-center mb-2 py-8 mx-4">
+					<p class="text-secondary xl:text-xl">Regenerate Your API Key</p>
 					<form
 						action="/auth/regenerate"
 						onsubmit="return confirm('Do you really want to invalidate and regenerate your API key?');"
