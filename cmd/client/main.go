@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal"
-	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/handlers"
 )
 
@@ -53,8 +52,7 @@ func main() {
 		return
 	}
 
-	us := db.NewUserStore(sqlDb)
-	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleClient(s, us, gs)))
+	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleClient(s, sqlDb, gs)))
 }
 
 func setupAuth() error {

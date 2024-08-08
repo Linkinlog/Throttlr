@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal"
-	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/handlers"
 )
 
@@ -35,11 +34,5 @@ func main() {
 	}
 	defer sqlDb.Close(context.Background())
 
-	kStore := db.NewKeyStore(sqlDb)
-
-	epStore := db.NewEndpointStore(sqlDb)
-
-	bStore := db.NewBucketStore(sqlDb)
-
-	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleServer(s, kStore, epStore, bStore)))
+	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleServer(s, sqlDb)))
 }

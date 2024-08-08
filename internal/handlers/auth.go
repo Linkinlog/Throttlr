@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
@@ -30,15 +31,15 @@ func init() {
 	gob.Register(models.UserCtxKey)
 }
 
-func HandleAuth(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.ServeMux {
+func HandleAuth(l *slog.Logger, pool *pgx.Conn, gs sessions.Store) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("GET /", withUser(handleView(shared.NewLayout(pages.NewNotFound(), ""), l), gs))
 	m.Handle("GET /sign-out", logHandler(l, gs, handleLogout(gs)))
-	m.Handle("GET /delete", withUser(logHandler(l, gs, handleDelete(us)), gs))
-	m.Handle("GET /regenerate", withUser(logHandler(l, gs, handleRegenKey(us, gs)), gs))
-	m.Handle("GET /{provider}", logHandler(l, gs, handleProvider(us, gs)))
-	m.Handle("GET /{provider}/callback", logHandler(l, gs, handleProviderCallback(us, gs)))
+	m.Handle("GET /delete", withUser(logHandler(l, gs, handleDelete(pool)), gs))
+	m.Handle("GET /regenerate", withUser(logHandler(l, gs, handleRegenKey(pool, gs)), gs))
+	m.Handle("GET /{provider}", logHandler(l, gs, handleProvider(pool, gs)))
+	m.Handle("GET /{provider}/callback", logHandler(l, gs, handleProviderCallback(pool, gs)))
 
 	return m
 }
@@ -61,7 +62,9 @@ func logHandler(l *slog.Logger, gs sessions.Store, h HandlerErrorFunc) http.Hand
 	}
 }
 
-func handleDelete(us *db.UserStore) HandlerErrorFunc {
+func handleDelete(pool *pgx.Conn) HandlerErrorFunc {
+	us := db.NewUserStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		user := models.UserFromCtx(r.Context())
 		if user.Id == "" {
@@ -83,7 +86,9 @@ func handleDelete(us *db.UserStore) HandlerErrorFunc {
 	}
 }
 
-func handleRegenKey(us *db.UserStore, gs sessions.Store) HandlerErrorFunc {
+func handleRegenKey(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
+	us := db.NewUserStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		user := models.UserFromCtx(r.Context())
 		if user.Id == "" {
@@ -116,7 +121,9 @@ func handleRegenKey(us *db.UserStore, gs sessions.Store) HandlerErrorFunc {
 	}
 }
 
-func handleProvider(us *db.UserStore, gs sessions.Store) HandlerErrorFunc {
+func handleProvider(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
+	us := db.NewUserStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		q := r.URL.Query()
 		q.Add("provider", r.PathValue("provider"))
@@ -131,7 +138,9 @@ func handleProvider(us *db.UserStore, gs sessions.Store) HandlerErrorFunc {
 	}
 }
 
-func handleProviderCallback(us *db.UserStore, gs sessions.Store) HandlerErrorFunc {
+func handleProviderCallback(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
+	us := db.NewUserStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		if err := internal.AuthenticateUserRequest(w, r, gs, us); err != nil {
 			return &httpError{

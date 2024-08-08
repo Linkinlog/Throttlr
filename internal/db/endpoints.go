@@ -18,10 +18,13 @@ func (es *EndpointStore) AllForUser(ctx context.Context, userId string) ([]*mode
 	allQuery := `
 SELECT
   original_url,
-  throttlr_url
+  throttlr_url,
+  max,
+  interval
 FROM
   endpoints
   JOIN api_keys on api_keys.user_id = endpoints.user_id
+  JOIN buckets on buckets.id = endpoints.bucket_id
 where
   api_keys.valid = true
   and api_keys.user_id = $1
@@ -34,8 +37,10 @@ where
 
 	var endpoints []*models.Endpoint
 	for rows.Next() {
-		e := &models.Endpoint{}
-		err := rows.Scan(&e.OriginalUrl, &e.ThrottlrPath)
+		e := &models.Endpoint{
+			Bucket: &models.Bucket{},
+		}
+		err := rows.Scan(&e.OriginalUrl, &e.ThrottlrPath, &e.Bucket.Max, &e.Bucket.Interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan endpoint: %w", err)
 		}
@@ -45,7 +50,7 @@ where
 	return endpoints, nil
 }
 
-func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId string, bucketId int) (int, error) {
+func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId string) (int, error) {
 	tx, err := es.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return 0, err
@@ -74,6 +79,12 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId s
 		}
 	}
 
+	var bucketId int
+	err = tx.QueryRow(ctx, "INSERT INTO buckets (max, interval) VALUES ($1, $2) Returning id", e.Bucket.Max, e.Bucket.Interval).Scan(&bucketId)
+	if err != nil {
+		return 0, err
+	}
+
 	var id int
 	err = tx.QueryRow(ctx, "INSERT INTO endpoints (user_id, bucket_id, original_url, throttlr_url) VALUES ($1, $2, $3, $4) Returning id", userId, bucketId, e.OriginalUrl, e.ThrottlrPath).Scan(&id)
 	if err != nil {
@@ -96,6 +107,22 @@ func (es *EndpointStore) ExistsByThrottlr(ctx context.Context, endpoint *models.
 }
 
 func (es *EndpointStore) Fill(ctx context.Context, endpoint *models.Endpoint, userId string) error {
-	err := es.db.QueryRow(ctx, "SELECT throttlr_url, original_url FROM endpoints WHERE throttlr_url = $1 and user_id = $2", endpoint.ThrottlrPath, userId).Scan(&endpoint.ThrottlrPath, &endpoint.OriginalUrl)
+	query := `
+SELECT
+	throttlr_url,
+	original_url,
+	max,
+	interval
+FROM
+	endpoints
+JOIN
+	buckets
+ON
+	buckets.id = endpoints.bucket_id
+WHERE
+	throttlr_url = $1
+	and user_id = $2
+`
+	err := es.db.QueryRow(ctx, query, endpoint.ThrottlrPath, userId).Scan(&endpoint.ThrottlrPath, &endpoint.OriginalUrl, &endpoint.Bucket.Max, &endpoint.Bucket.Interval)
 	return err
 }

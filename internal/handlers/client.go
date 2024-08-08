@@ -8,14 +8,14 @@ import (
 	"net/url"
 
 	"github.com/gorilla/sessions"
+	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/assets"
-	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
 	"github.com/linkinlog/throttlr/web/pages"
 	"github.com/linkinlog/throttlr/web/shared"
 )
 
-func HandleClient(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.ServeMux {
+func HandleClient(l *slog.Logger, pool *pgx.Conn, gs sessions.Store) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.NewAssets()))))
@@ -30,7 +30,7 @@ func HandleClient(l *slog.Logger, us *db.UserStore, gs sessions.Store) *http.Ser
 	m.Handle("GET /views/endpoints", proxyToServer())
 	m.Handle("POST /register/{apiKey}", proxyToServer())
 
-	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, us, gs)))
+	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, pool, gs)))
 
 	// catch-all + landing
 	m.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {

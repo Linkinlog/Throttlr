@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
@@ -34,17 +35,20 @@ func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 	}
 }
 
-func HandleServer(l *slog.Logger, ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore) *http.ServeMux {
+func HandleServer(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 	m := http.NewServeMux()
 
-	m.Handle("POST /register/{apiKey}", apiLogHandler(l, registerEndpoint(ks, es, bs)))
-	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, proxyEndpoint(ks, es)))
-	m.Handle("GET /views/endpoints", apiLogHandler(l, handleEndpoints(es, ks)))
+	m.Handle("POST /register/{apiKey}", apiLogHandler(l, registerEndpoint(pool)))
+	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, proxyEndpoint(pool)))
+	m.Handle("GET /views/endpoints", apiLogHandler(l, handleEndpoints(pool)))
 
 	return m
 }
 
-func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
+func handleEndpoints(pool *pgx.Conn) HandlerErrorFunc {
+	ks := db.NewKeyStore(pool)
+	es := db.NewEndpointStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key := r.URL.Query().Get("apiKey")
 
@@ -85,7 +89,10 @@ func handleEndpoints(es *db.EndpointStore, ks *db.KeyStore) HandlerErrorFunc {
 	}
 }
 
-func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
+func proxyEndpoint(pool *pgx.Conn) HandlerErrorFunc {
+	ks := db.NewKeyStore(pool)
+	es := db.NewEndpointStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key := r.URL.Query().Get("key")
 		exists, apiKeyId := ks.Exists(key)
@@ -103,7 +110,7 @@ func proxyEndpoint(ks *db.KeyStore, es *db.EndpointStore) HandlerErrorFunc {
 
 		throttlrPath := r.PathValue("throttlrPath")
 
-		e := &models.Endpoint{ThrottlrPath: throttlrPath}
+		e := &models.Endpoint{ThrottlrPath: throttlrPath, Bucket: &models.Bucket{}}
 		if exists, err := es.ExistsByThrottlr(r.Context(), e, userId); !exists {
 			if err != nil {
 				return &httpError{err, "failed to check if endpoint exists"}
@@ -138,7 +145,10 @@ func modifyRequest(r *http.Request, originalUrl *url.URL) {
 	r.Host = originalUrl.Host
 }
 
-func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore) HandlerErrorFunc {
+func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
+	ks := db.NewKeyStore(pool)
+	es := db.NewEndpointStore(pool)
+
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key := r.PathValue("apiKey")
 		exists, apiKeyId := ks.Exists(key)
@@ -169,27 +179,13 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
 		}
 
-		b := models.NewBucket(models.Interval(interval), maxTokens)
-		bDb := db.BucketModel{Bucket: b}
-		if exists, err := bs.Exists(r.Context(), bDb); exists {
-			if err != nil {
-				return &httpError{err, "failed to check if bucket exists"}
-			} else {
-				return &httpError{BucketExists, "Bucket already exists"}
-			}
-		}
-
-		bucketId, err := bs.Store(r.Context(), bDb)
-		if err != nil {
-			return &httpError{err, "failed to store bucket"}
-		}
-
 		userId, err := ks.UserIdFromKey(key)
 		if err != nil {
 			return &httpError{err, "failed to get user from key"}
 		}
 
-		e := models.NewEndpoint(endpoint)
+		b := models.NewBucket(models.Interval(interval), maxTokens)
+		e := models.NewEndpoint(endpoint, b)
 		if exists, err := es.ExistsByOriginal(r.Context(), e, userId); exists {
 			if err != nil {
 				return &httpError{err, "failed to check if endpoint exists"}
@@ -198,7 +194,7 @@ func registerEndpoint(ks *db.KeyStore, es *db.EndpointStore, bs *db.BucketStore)
 			}
 		}
 
-		_, err = es.Store(r.Context(), e, userId, bucketId)
+		_, err = es.Store(r.Context(), e, userId)
 		if err != nil {
 			return &httpError{err, "failed to store endpoint"}
 		}
