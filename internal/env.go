@@ -10,6 +10,14 @@ var (
 	NotFound   = errors.New("key not found")
 )
 
+func ServerCallbackURL() string {
+	callbackUrl := "http://localhost:8091"
+	if url, err := DefaultEnv.Get("SERVER_CALLBACK_URL"); err == nil {
+		callbackUrl = url
+	}
+	return callbackUrl
+}
+
 func NewEnv() *Env {
 	return &Env{}
 }

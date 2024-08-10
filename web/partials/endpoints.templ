@@ -2,25 +2,10 @@ package partials
 
 import (
 	"github.com/linkinlog/throttlr/internal/models"
-	"fmt"
 )
 
-templ Endpoints(host, key string, e []*models.Endpoint) {
-	<p class="text-xs text-secondary">All of the links below will include your API key.</p>
-	<table class="table-auto w-full text-secondary text-center">
-		<thead class="bg-primary">
-			<tr class="text-dark">
-				<th>Original URL</th>
-				<th>Throttlr Path</th>
-			</tr>
-		</thead>
-		<tbody>
-			for _, endpoint := range e {
-				<tr class="border-b-2 border-primary text-sm md:text-base">
-					<td>{ endpoint.OriginalUrl }</td>
-					<td><a class="ml-8" target="_blank" href={ templ.URL(fmt.Sprintf("%s/endpoints/%s?key=%s", host, endpoint.ThrottlrPath, key)) }>{ fmt.Sprintf("%s/endpoints/%s", host, endpoint.ThrottlrPath) }</a></td>
-				</tr>
-			}
-		</tbody>
-	</table>
+templ Endpoints(e []*models.Endpoint, key string) {
+	for _, e := range e {
+		@Endpoint(e, key)
+	}
 }

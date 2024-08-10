@@ -1,16 +1,22 @@
 package pages
 
 import (
-	"fmt"
 	"github.com/linkinlog/throttlr/web/shared"
+	"github.com/linkinlog/throttlr/web/partials"
 	"github.com/linkinlog/throttlr/internal/models"
 )
 
-func NewDashboard() dashboard {
-	return dashboard{}
+func NewDashboard(endpoints []*models.Endpoint, key string) dashboard {
+	return dashboard{
+		endpoints: endpoints,
+		key:       key,
+	}
 }
 
-type dashboard struct{}
+type dashboard struct {
+	endpoints []*models.Endpoint
+	key       string
+}
 
 func (d dashboard) Props() shared.PageProps {
 	return shared.PageProps{
@@ -22,5 +28,10 @@ templ (d dashboard) View() {
 	<section class="mt-4">
 		<a href="/endpoints"><button class="bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight">+</button></a>
 	</section>
-	<section class="mt-4 overflow-x-scroll" hx-get="/views/endpoints" hx-trigger="load" hx-vals={ fmt.Sprintf("{\"apiKey\": \"%s\"}", models.UserFromCtx(ctx).ApiKey) }></section>
+	if len(d.endpoints) == 0 {
+		<p class="text-center text-secondary">No endpoints registered.</p>
+		<p class="text-center text-secondary">Click the + button to register a new endpoint and get started!</p>
+	} else {
+		@partials.Endpoints(d.endpoints, d.key)
+	}
 }

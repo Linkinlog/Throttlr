@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/linkinlog/throttlr/internal/models"
@@ -17,6 +18,7 @@ type EndpointStore struct{ db *pgx.Conn }
 func (es *EndpointStore) AllForUser(ctx context.Context, userId string) ([]*models.Endpoint, error) {
 	allQuery := `
 SELECT
+  endpoints.id,
   original_url,
   throttlr_url,
   max,
@@ -40,10 +42,16 @@ where
 		e := &models.Endpoint{
 			Bucket: &models.Bucket{},
 		}
-		err := rows.Scan(&e.OriginalUrl, &e.ThrottlrPath, &e.Bucket.Max, &e.Bucket.Interval)
+		var URL string
+		err := rows.Scan(&e.Id, &URL, &e.ThrottlrPath, &e.Bucket.Max, &e.Bucket.Interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan endpoint: %w", err)
 		}
+		parsedURL, err := url.Parse(URL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse URL: %w", err)
+		}
+		e.OriginalUrl = parsedURL
 		endpoints = append(endpoints, e)
 	}
 
@@ -86,7 +94,7 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId s
 	}
 
 	var id int
-	err = tx.QueryRow(ctx, "INSERT INTO endpoints (user_id, bucket_id, original_url, throttlr_url) VALUES ($1, $2, $3, $4) Returning id", userId, bucketId, e.OriginalUrl, e.ThrottlrPath).Scan(&id)
+	err = tx.QueryRow(ctx, "INSERT INTO endpoints (user_id, bucket_id, original_url, throttlr_url) VALUES ($1, $2, $3, $4) Returning id", userId, bucketId, e.OriginalUrl.String(), e.ThrottlrPath).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -109,6 +117,7 @@ func (es *EndpointStore) ExistsByThrottlr(ctx context.Context, endpoint *models.
 func (es *EndpointStore) Fill(ctx context.Context, endpoint *models.Endpoint, userId string) error {
 	query := `
 SELECT
+	endpoints.id,
 	throttlr_url,
 	original_url,
 	max,
@@ -123,6 +132,92 @@ WHERE
 	throttlr_url = $1
 	and user_id = $2
 `
-	err := es.db.QueryRow(ctx, query, endpoint.ThrottlrPath, userId).Scan(&endpoint.ThrottlrPath, &endpoint.OriginalUrl, &endpoint.Bucket.Max, &endpoint.Bucket.Interval)
-	return err
+	var URL string
+	err := es.db.QueryRow(ctx, query, endpoint.ThrottlrPath, userId).Scan(&endpoint.Id, &endpoint.ThrottlrPath, &URL, &endpoint.Bucket.Max, &endpoint.Bucket.Interval)
+	if err != nil {
+		return err
+	}
+	parsedURL, err := url.Parse(URL)
+	if err != nil {
+		return err
+	}
+
+	endpoint.OriginalUrl = parsedURL
+
+	return nil
+}
+
+func (es *EndpointStore) Get(ctx context.Context, id int, userId string) (*models.Endpoint, error) {
+	query := `
+SELECT
+	endpoints.id,
+	throttlr_url,
+	original_url,
+	max,
+	interval
+FROM
+	endpoints
+JOIN
+	buckets
+ON
+	buckets.id = endpoints.bucket_id
+WHERE
+	endpoints.id = $1
+	and user_id = $2
+`
+	e := &models.Endpoint{Bucket: &models.Bucket{}}
+	var URL string
+	err := es.db.QueryRow(ctx, query, id, userId).Scan(&e.Id, &e.ThrottlrPath, &URL, &e.Bucket.Max, &e.Bucket.Interval)
+	if err != nil {
+		return nil, err
+	}
+	parsedURL, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+
+	e.OriginalUrl = parsedURL
+
+	return e, nil
+}
+
+func (es *EndpointStore) Delete(ctx context.Context, endpoint *models.Endpoint, userId string) error {
+	tx, err := es.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+	_, err = tx.Exec(ctx, "DELETE FROM endpoints WHERE id = $1 and user_id = $2", endpoint.Id, userId)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (es *EndpointStore) Update(ctx context.Context, endpoint *models.Endpoint, userId string) error {
+	tx, err := es.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+	exists, err := es.ExistsByOriginal(ctx, endpoint, userId)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("endpoint already exists")
+	}
+	_, err = tx.Exec(ctx, "UPDATE endpoints SET original_url = $1 WHERE id = $2 and user_id = $3", endpoint.OriginalUrl, endpoint.Id, userId)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2 WHERE id = (SELECT bucket_id FROM endpoints WHERE id = $3 and user_id = $4)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.Id, userId)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
