@@ -162,7 +162,7 @@ func siteNavList() templ.Component {
 			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/\" class=\"block\">Home</a> <a href=\"/about\" class=\"block\">About</a> <a href=\"/docs\" class=\"block\">Docs</a>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/\" class=\"block\">Home</a> <a href=\"/about\" class=\"block\">About</a> <a href=\"https://docs.trythrottlr.com\" target=\"_blank\" class=\"block\">Docs</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

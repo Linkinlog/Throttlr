@@ -36,7 +36,6 @@ func HandleClient(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 	m.Handle("GET /about", withUser(handleView(shared.NewLayout(pages.NewAbout(), ""), l), gs))
 	m.Handle("GET /sign-up", withUser(handleView(shared.NewLayout(pages.NewAuth(false), ""), l), gs))
 	m.Handle("GET /sign-in", withUser(handleView(shared.NewLayout(pages.NewAuth(true), ""), l), gs))
-	m.Handle("GET /docs", withUser(handleView(shared.NewLayout(pages.NewWip(), ""), l), gs))
 	m.Handle("GET /settings", withUser(handleView(shared.NewLayout(pages.NewSettings(), ""), l), gs))
 
 	m.Handle("GET /endpoints", withUser(handleView(shared.NewLayout(pages.NewEndpointForm(), ""), l), gs))
