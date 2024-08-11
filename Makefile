@@ -26,6 +26,7 @@ watch.tw:
 
 gen:
 	@tailwindcss --input web/input.css --output assets/app.css --minify
+	@swag init -g internal/handlers/server.go
 	@go generate ./...
 
 test:
@@ -36,6 +37,7 @@ lint: gen
 	@templ fmt .
 	@gofumpt -d -w .
 	@golangci-lint run
+	@swag fmt -d internal/handlers
 
 docker: gen
 	@docker-compose up --build

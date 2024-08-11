@@ -44,9 +44,8 @@ services:
     user: postgres
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - db.env
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./build/init.sql:/docker-entrypoint-initdb.d/init.sql

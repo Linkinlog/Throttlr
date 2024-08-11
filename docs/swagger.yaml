@@ -1,0 +1,153 @@
+basePath: /v1
+info:
+  contact: {}
+  description: This is the API for Throttlr, a rate limiting service.
+  title: Throttlr API
+  version: 0.0.1
+paths:
+  /delete/{apiKey}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Users will hit this endpoint to delete an existing endpoint
+      parameters:
+      - description: Endpoint ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      - text/html
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Delete endpoint
+      tags:
+      - Delete
+  /endpoints/{throttlrPath}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Users will hit this endpoint to access the proxied endpoint
+      parameters:
+      - description: Throttlr path
+        in: path
+        name: throttlrPath
+        required: true
+        type: string
+      produces:
+      - text/plain
+      - application/json
+      - text/html
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Proxy endpoint
+      tags:
+      - Proxy
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Users will hit this endpoint to access the proxied endpoint
+      parameters:
+      - description: Throttlr path
+        in: path
+        name: throttlrPath
+        required: true
+        type: string
+      produces:
+      - text/plain
+      - application/json
+      - text/html
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Proxy endpoint
+      tags:
+      - Proxy
+  /register/{apiKey}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Users will hit this endpoint to register a new endpoint
+      parameters:
+      - description: Endpoint to register
+        in: formData
+        name: endpoint
+        required: true
+        type: string
+      - description: Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        in: formData
+        name: interval
+        required: true
+        type: integer
+      - description: Max requests per interval
+        in: formData
+        name: max
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      - text/html
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Register endpoint
+      tags:
+      - Register
+  /update/{apiKey}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Users will hit this endpoint to update an existing endpoint
+      parameters:
+      - description: Endpoint to register
+        in: formData
+        name: endpoint
+        required: true
+        type: string
+      - description: Endpoint ID
+        in: formData
+        name: endpoint_id
+        required: true
+        type: integer
+      - description: Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        in: formData
+        name: interval
+        required: true
+        type: integer
+      - description: Max requests per interval
+        in: formData
+        name: max
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      - text/html
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update endpoint
+      tags:
+      - Update
+securityDefinitions:
+  ApiKeyAuth:
+    in: query
+    name: key
+    type: apiKey
+swagger: "2.0"

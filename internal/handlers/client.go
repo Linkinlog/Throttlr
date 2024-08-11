@@ -40,9 +40,9 @@ func HandleClient(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 
 	m.Handle("GET /endpoints", withUser(handleView(shared.NewLayout(pages.NewEndpointForm(), ""), l), gs))
 	m.Handle("GET /views/endpoints/{throttlrPath}", withUser(handleViewEndpoint(pool, gs, l), gs))
-	m.Handle("POST /register/{apiKey}", proxyToServer())
-	m.Handle("POST /update/{apiKey}", proxyToServer())
-	m.Handle("POST /delete/{apiKey}", proxyToServer())
+	m.Handle("POST /v1/register/{apiKey}", proxyToServer())
+	m.Handle("POST /v1/update/{apiKey}", proxyToServer())
+	m.Handle("POST /v1/delete/{apiKey}", proxyToServer())
 
 	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, pool, gs)))
 

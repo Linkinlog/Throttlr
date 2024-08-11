@@ -14,8 +14,16 @@ import (
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+//	@title						Throttlr API
+//	@version					0.0.1
+//	@description				This is the API for Throttlr, a rate limiting service.
+//	@BasePath					/v1
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							query
+//	@name						key
 var (
 	MissingAPIKey         = errors.New("missing API key")
 	InvalidAPIKey         = errors.New("invalid API key")
@@ -38,6 +46,15 @@ func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 func HandleServer(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 	m := http.NewServeMux()
 
+	m.Handle("/v1/", http.StripPrefix("/v1", serveV1(l, pool)))
+	m.Handle("/swagger/*", httpSwagger.WrapHandler)
+
+	return m
+}
+
+func serveV1(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
+	m := http.NewServeMux()
+
 	m.Handle("POST /register/{apiKey}", apiLogHandler(l, registerEndpoint(pool)))
 	m.Handle("POST /update/{apiKey}", apiLogHandler(l, updateEndpoint(pool)))
 	m.Handle("POST /delete/{apiKey}", apiLogHandler(l, deleteEndpoint(pool)))
@@ -46,6 +63,18 @@ func HandleServer(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 	return m
 }
 
+//	@Summary		Proxy endpoint
+//	@Description	Users will hit this endpoint to access the proxied endpoint
+//	@Tags			Proxy
+//	@Accept			x-www-form-urlencoded
+//	@Accept			json
+//	@Produce		plain
+//	@Produce		json
+//	@Produce		html
+//	@Param			throttlrPath	path	string	true	"Throttlr path"
+//	@Security		ApiKeyAuth
+//	@Router			/endpoints/{throttlrPath} [get]
+//	@Router			/endpoints/{throttlrPath} [post]
 func proxyEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
@@ -97,6 +126,17 @@ func modifyRequest(r *http.Request, originalUrl *url.URL) {
 	r.Host = originalUrl.Host
 }
 
+//	@Summary		Register endpoint
+//	@Description	Users will hit this endpoint to register a new endpoint
+//	@Tags			Register
+//	@Accept			x-www-form-urlencoded
+//	@Produce		plain
+//	@Produce		html
+//	@Security		ApiKeyAuth
+//	@Param			endpoint	formData	string	true	"Endpoint to register"
+//	@Param			interval	formData	int		true	"Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month"	Enums(1, 2, 3, 4, 5)
+//	@Param			max			formData	int		true	"Max requests per interval"
+//	@Router			/register/{apiKey} [post]
 func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
@@ -157,6 +197,18 @@ func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	}
 }
 
+//	@Summary		Update endpoint
+//	@Description	Users will hit this endpoint to update an existing endpoint
+//	@Tags			Update
+//	@Accept			x-www-form-urlencoded
+//	@Produce		plain
+//	@Produce		html
+//	@Security		ApiKeyAuth
+//	@Param			endpoint	formData	string	true	"Endpoint to register"
+//	@Param			endpoint_id	formData	int		true	"Endpoint ID"
+//	@Param			interval	formData	int		true	"Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month"	Enums(1, 2, 3, 4, 5)
+//	@Param			max			formData	int		true	"Max requests per interval"
+//	@Router			/update/{apiKey} [post]
 func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
@@ -252,6 +304,15 @@ func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	}
 }
 
+//	@Summary		Delete endpoint
+//	@Description	Users will hit this endpoint to delete an existing endpoint
+//	@Tags			Delete
+//	@Accept			x-www-form-urlencoded
+//	@Produce		plain
+//	@Produce		html
+//	@Security		ApiKeyAuth
+//	@Param			id	query	int	true	"Endpoint ID"
+//	@Router			/delete/{apiKey} [post]
 func deleteEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)

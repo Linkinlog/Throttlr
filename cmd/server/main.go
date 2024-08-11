@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5"
+	_ "github.com/linkinlog/throttlr/docs"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/handlers"
 )

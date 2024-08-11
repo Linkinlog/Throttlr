@@ -59,7 +59,7 @@ func Endpoint(e *models.Endpoint, key string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 templ.SafeURL = templ.URL(fmt.Sprintf("%s/endpoints/%s?key=%s", internal.ServerCallbackURL(), e.ThrottlrPath, key))
+		var templ_7745c5c3_Var4 templ.SafeURL = templ.URL(fmt.Sprintf("%s/v1/endpoints/%s?key=%s", internal.ServerCallbackURL(), e.ThrottlrPath, key))
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var4)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

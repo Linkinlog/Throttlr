@@ -1,0 +1,225 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the API for Throttlr, a rate limiting service.",
+        "title": "Throttlr API",
+        "contact": {},
+        "version": "0.0.1"
+    },
+    "basePath": "/v1",
+    "paths": {
+        "/delete/{apiKey}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Users will hit this endpoint to delete an existing endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/plain",
+                    "text/html"
+                ],
+                "tags": [
+                    "Delete"
+                ],
+                "summary": "Delete endpoint",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Endpoint ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/endpoints/{throttlrPath}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Users will hit this endpoint to access the proxied endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain",
+                    "application/json",
+                    "text/html"
+                ],
+                "tags": [
+                    "Proxy"
+                ],
+                "summary": "Proxy endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Throttlr path",
+                        "name": "throttlrPath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Users will hit this endpoint to access the proxied endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain",
+                    "application/json",
+                    "text/html"
+                ],
+                "tags": [
+                    "Proxy"
+                ],
+                "summary": "Proxy endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Throttlr path",
+                        "name": "throttlrPath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/register/{apiKey}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Users will hit this endpoint to register a new endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/plain",
+                    "text/html"
+                ],
+                "tags": [
+                    "Register"
+                ],
+                "summary": "Register endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Endpoint to register",
+                        "name": "endpoint",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                        ],
+                        "type": "integer",
+                        "description": "Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month",
+                        "name": "interval",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max requests per interval",
+                        "name": "max",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/update/{apiKey}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Users will hit this endpoint to update an existing endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/plain",
+                    "text/html"
+                ],
+                "tags": [
+                    "Update"
+                ],
+                "summary": "Update endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Endpoint to register",
+                        "name": "endpoint",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Endpoint ID",
+                        "name": "endpoint_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                        ],
+                        "type": "integer",
+                        "description": "Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month",
+                        "name": "interval",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max requests per interval",
+                        "name": "max",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "key",
+            "in": "query"
+        }
+    }
+}

@@ -13,7 +13,7 @@
 ## Register
 - Should be a post request with the API key
 - own entity
-- `/register?key=asdf` `data={"endpoint": "https://google.com", "interval": "daily", "limit": 100}`
+- `/v1/register?key=asdf` `data={"endpoint": "https://google.com", "interval": "daily", "limit": 100}`
 ## Generation of unique url
 - associated with endpoint
 ## Token bucket algorithm
