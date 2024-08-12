@@ -1,14 +1,24 @@
 services:
   client:
     container_name: client
-    build:
-      context: .
-      dockerfile: build/Dockerfile.client
+    image: ghcr.io/linkinlog/throttlr-client:main
     restart: always
     ports:
       - "8090:8080"
-    env_file:
-      - .env
+    environment:
+      ENV: production
+      GITHUB_KEY: ${GITHUB_KEY}
+      GITHUB_SECRET: ${GITHUB_SECRET}
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      GOOGLE_SECRET: ${GOOGLE_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CLIENT_DB: ${CLIENT_DB}
+      CLIENT_CALLBACK_URL: ${CLIENT_CALLBACK_URL}
+      SERVER_CALLBACK_URL: ${SERVER_CALLBACK_URL}
+      CLIENT_INTERNAL_URL: ${CLIENT_INTERNAL_URL}
+      SERVER_INTERNAL_URL: ${SERVER_INTERNAL_URL}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
     depends_on:
       db:
         condition: service_healthy
@@ -16,14 +26,19 @@ services:
       - throttlr
   server:
     container_name: server
-    build:
-      context: .
-      dockerfile: build/Dockerfile.server
+    image: ghcr.io/linkinlog/throttlr-server:main
     restart: always
     ports:
       - "8091:8081"
-    env_file:
-      - .env
+    environment:
+      SESSION_SECRET: ${SESSION_SECRET}
+      SERVER_DB: ${SERVER_DB}
+      CLIENT_CALLBACK_URL: ${CLIENT_CALLBACK_URL}
+      SERVER_CALLBACK_URL: ${SERVER_CALLBACK_URL}
+      CLIENT_INTERNAL_URL: ${CLIENT_INTERNAL_URL}
+      SERVER_INTERNAL_URL: ${SERVER_INTERNAL_URL}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
     depends_on:
       db:
         condition: service_healthy

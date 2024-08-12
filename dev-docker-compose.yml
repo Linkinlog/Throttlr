@@ -1,0 +1,58 @@
+services:
+  client:
+    container_name: client
+    build:
+      context: .
+      dockerfile: build/Dockerfile.client
+    restart: always
+    ports:
+      - "8090:8080"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - throttlr
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: build/Dockerfile.server
+    restart: always
+    ports:
+      - "8091:8081"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - throttlr
+  db:
+    container_name: db
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    user: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: throttlr
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./build/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    networks:
+      - throttlr
+volumes:
+  db-data:
+networks:
+  throttlr:
+    driver: bridge

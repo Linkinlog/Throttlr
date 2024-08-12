@@ -6,14 +6,13 @@ server.build:
 	@docker build -t server -f ./build/Dockerfile.server .
 server: server.build
 	@docker run -it --rm -p 8081:8081 server
+docker: gen
+	@docker compose -f dev-docker-compose.yml up --build -d --remove-orphans
 
 migrate:
 	@goose -dir migrations sqlite ./build/db-data/throttlr.db up
 migrate.fresh:
 	@goose -dir migrations sqlite ./build/db-data/throttlr.db redo
-
-dev: gen
-	@go run ./cmd/client/main.go
 
 watch.go:
 	air
@@ -39,7 +38,4 @@ lint: gen
 	@golangci-lint run
 	@swag fmt -d internal/handlers
 
-docker: gen
-	@docker-compose up --build
-
-.PHONY: client.build client server.build server dev gen test lint
+.PHONY: client.build client server.build server docker migrate migrate.fresh watch.go watch.t watch.tw gen test lint
