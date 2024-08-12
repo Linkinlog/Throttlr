@@ -1,6 +1,14 @@
 # OpenAPI
 
-{% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/delete/{apiKey}" method="post" %}
+{% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/register" method="post" %}
+[https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json](https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json)
+{% endswagger %}
+
+{% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/update/{throttlrPath}" method="post" %}
+[https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json](https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json)
+{% endswagger %}
+
+{% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/delete/{throttlrPath}" method="post" %}
 [https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json](https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json)
 {% endswagger %}
 
@@ -9,13 +17,5 @@
 {% endswagger %}
 
 {% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/endpoints/{throttlrPath}" method="post" %}
-[https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json](https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json)
-{% endswagger %}
-
-{% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/register/{apiKey}" method="post" %}
-[https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json](https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json)
-{% endswagger %}
-
-{% swagger src="https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json" path="/update/{apiKey}" method="post" %}
 [https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json](https://raw.githubusercontent.com/Linkinlog/Throttlr/main/docs/swagger.json)
 {% endswagger %}
