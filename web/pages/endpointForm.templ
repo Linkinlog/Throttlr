@@ -20,7 +20,7 @@ func (e endpointForm) Props() shared.PageProps {
 
 templ (e endpointForm) View() {
 	<div hx-ext="response-targets">
-		<form hx-boost="true" hx-target-error="#errors" hx-target="#response-p" hx-post={ fmt.Sprintf("/v1/register/%s", models.UserFromCtx(ctx).ApiKey.String()) } action={ templ.URL(fmt.Sprintf("/v1/register/%s", models.UserFromCtx(ctx).ApiKey.String())) } method="POST" class="mt-4">
+		<form hx-boost="true" hx-target-error="#errors" hx-target="#response-p" hx-post={ fmt.Sprintf("/v1/register?key=%s", models.UserFromCtx(ctx).ApiKey.String()) } action={ templ.URL(fmt.Sprintf("/v1/register?key=%s", models.UserFromCtx(ctx).ApiKey.String())) } method="POST" class="mt-4">
 			<div class="flex flex-col">
 				<label for="originalUrl" class="text-secondary">Original URL</label>
 				<input type="text" name="endpoint" id="endpoint" class="border-2 border-primary rounded-lg p-2"/>

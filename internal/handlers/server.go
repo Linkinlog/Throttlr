@@ -17,13 +17,13 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-//	@title						Throttlr API
-//	@version					0.0.1
-//	@description				This is the API for Throttlr, a rate limiting service.
-//	@BasePath					/v1
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							query
-//	@name						key
+// @title						Throttlr API
+// @version					0.0.1
+// @description				This is the API for Throttlr, a rate limiting service.
+// @BasePath					/v1
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							query
+// @name						key
 var (
 	MissingAPIKey         = errors.New("missing API key")
 	InvalidAPIKey         = errors.New("invalid API key")
@@ -55,26 +55,26 @@ func HandleServer(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 func serveV1(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 	m := http.NewServeMux()
 
-	m.Handle("POST /register/{apiKey}", apiLogHandler(l, registerEndpoint(pool)))
-	m.Handle("POST /update/{apiKey}", apiLogHandler(l, updateEndpoint(pool)))
-	m.Handle("POST /delete/{apiKey}", apiLogHandler(l, deleteEndpoint(pool)))
+	m.Handle("POST /register", apiLogHandler(l, registerEndpoint(pool)))
+	m.Handle("POST /update/{throttlrPath}", apiLogHandler(l, updateEndpoint(pool)))
+	m.Handle("POST /delete/{throttlrPath}", apiLogHandler(l, deleteEndpoint(pool)))
 	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, proxyEndpoint(pool)))
 
 	return m
 }
 
-//	@Summary		Proxy endpoint
-//	@Description	Users will hit this endpoint to access the proxied endpoint
-//	@Tags			Proxy
-//	@Accept			x-www-form-urlencoded
-//	@Accept			json
-//	@Produce		plain
-//	@Produce		json
-//	@Produce		html
-//	@Param			throttlrPath	path	string	true	"Throttlr path"
-//	@Security		ApiKeyAuth
-//	@Router			/endpoints/{throttlrPath} [get]
-//	@Router			/endpoints/{throttlrPath} [post]
+// @Summary		Proxy endpoint
+// @Description	Users will hit this endpoint to access the proxied endpoint
+// @Tags			Proxy
+// @Accept			x-www-form-urlencoded
+// @Accept			json
+// @Produce		plain
+// @Produce		json
+// @Produce		html
+// @Param			throttlrPath	path	string	true	"Throttlr path"
+// @Security		ApiKeyAuth
+// @Router			/endpoints/{throttlrPath} [get]
+// @Router			/endpoints/{throttlrPath} [post]
 func proxyEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
@@ -126,23 +126,29 @@ func modifyRequest(r *http.Request, originalUrl *url.URL) {
 	r.Host = originalUrl.Host
 }
 
-//	@Summary		Register endpoint
-//	@Description	Users will hit this endpoint to register a new endpoint
-//	@Tags			Register
-//	@Accept			x-www-form-urlencoded
-//	@Produce		plain
-//	@Produce		html
-//	@Security		ApiKeyAuth
-//	@Param			endpoint	formData	string	true	"Endpoint to register"
-//	@Param			interval	formData	int		true	"Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month"	Enums(1, 2, 3, 4, 5)
-//	@Param			max			formData	int		true	"Max requests per interval"
-//	@Router			/register/{apiKey} [post]
+// @Summary		Register endpoint
+// @Description	Users will hit this endpoint to register a new endpoint
+// @Tags			Register
+// @Accept			x-www-form-urlencoded
+// @Produce		plain
+// @Produce		html
+// @Security		ApiKeyAuth
+// @Param			endpoint	formData	string	true	"Endpoint to register"
+// @Param			interval	formData	int		true	"Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month"	Enums(1, 2, 3, 4, 5)
+// @Param			max			formData	int		true	"Max requests per interval"
+// @Success		201			{string}	string	"Created"
+// @Router			/register [post]
 func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
-		endpoint, key, httpErr := validateEndpointRequest(r, ks)
+		endpoint, httpErr := validateEndpointRequest(r)
+		if httpErr != nil {
+			return httpErr
+		}
+
+		key, httpErr := validateApiKey(r, ks)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -165,7 +171,7 @@ func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 			return &httpError{err, "failed to store endpoint"}
 		}
 
-		proxiedURL := fmt.Sprintf("%s/endpoints/%s?key=%s",
+		proxiedURL := fmt.Sprintf("%s/v1/endpoints/%s?key=%s",
 			internal.ServerCallbackURL(),
 			endpoint.ThrottlrPath,
 			key,
@@ -197,21 +203,22 @@ func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	}
 }
 
-//	@Summary		Update endpoint
-//	@Description	Users will hit this endpoint to update an existing endpoint
-//	@Tags			Update
-//	@Accept			x-www-form-urlencoded
-//	@Produce		plain
-//	@Produce		html
-//	@Security		ApiKeyAuth
-//	@Param			endpoint	formData	string	true	"Endpoint to register"
-//	@Param			endpoint_id	formData	int		true	"Endpoint ID"
-//	@Param			interval	formData	int		true	"Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month"	Enums(1, 2, 3, 4, 5)
-//	@Param			max			formData	int		true	"Max requests per interval"
-//	@Router			/update/{apiKey} [post]
+// @Summary		Update endpoint
+// @Description	Users will hit this endpoint to update an existing endpoint
+// @Tags			Update
+// @Accept			x-www-form-urlencoded
+// @Produce		plain
+// @Produce		html
+// @Security		ApiKeyAuth
+// @Param			endpoint		formData	string	true	"Updated endpoint"
+// @Param			interval		formData	int		true	"Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month"	Enums(1, 2, 3, 4, 5)
+// @Param			max				formData	int		true	"Max requests per interval"
+// @Param			throttlrPath	path		string	true	"Throttlr path"
+// @Success		201				{string}	string	"Created"
+// @Router			/update/{throttlrPath} [post]
 func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
-	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
+	ks := db.NewKeyStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key, httpErr := validateApiKey(r, ks)
@@ -230,34 +237,29 @@ func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 
 		newEndpoint := r.FormValue("endpoint")
 		if newEndpoint == "" {
-			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+			return &httpError{InvalidEndpointValues, "Invalid endpoint value"}
 		}
 		newInterval := r.FormValue("interval")
 		newIntervalInt, err := strconv.Atoi(newInterval)
 		if newInterval == "" || err != nil {
-			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+			return &httpError{InvalidEndpointValues, "Invalid interval value"}
 		}
 		newMax := r.FormValue("max")
 		newMaxInt, err := strconv.Atoi(newMax)
 		if newMax == "" || err != nil {
-			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
-		}
-		endpointId := r.FormValue("endpoint_id")
-		if endpointId == "" {
-			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+			return &httpError{InvalidEndpointValues, "Invalid max value"}
 		}
 
-		enpointIdInt, err := strconv.Atoi(endpointId)
-		if err != nil {
-			return &httpError{err, "failed to convert endpoint id"}
+		throttlrPath := r.PathValue("throttlrPath")
+		if throttlrPath == "" {
+			return &httpError{InvalidEndpointValues, "Invalid throttlrPath value"}
 		}
 
-		endpoint, err := es.Get(r.Context(), enpointIdInt, userId)
+		endpoint, err := es.Get(r.Context(), throttlrPath, userId)
 		if err != nil {
 			return &httpError{err, "failed to get endpoint"}
 		}
 
-		endpoint.Id = enpointIdInt
 		endpoint.Bucket.Max = newMaxInt
 		endpoint.Bucket.Interval = models.Interval(newIntervalInt)
 		endpoint.OriginalUrl, err = url.Parse(newEndpoint)
@@ -272,7 +274,7 @@ func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 			return &httpError{err, "failed to update endpoint"}
 		}
 
-		proxiedURL := fmt.Sprintf("%s/endpoints/%s?key=%s",
+		proxiedURL := fmt.Sprintf("%s/v1/endpoints/%s?key=%s",
 			internal.ServerCallbackURL(),
 			endpoint.ThrottlrPath,
 			key,
@@ -304,15 +306,16 @@ func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	}
 }
 
-//	@Summary		Delete endpoint
-//	@Description	Users will hit this endpoint to delete an existing endpoint
-//	@Tags			Delete
-//	@Accept			x-www-form-urlencoded
-//	@Produce		plain
-//	@Produce		html
-//	@Security		ApiKeyAuth
-//	@Param			id	query	int	true	"Endpoint ID"
-//	@Router			/delete/{apiKey} [post]
+// @Summary		Delete endpoint
+// @Description	Users will hit this endpoint to delete an existing endpoint
+// @Tags			Delete
+// @Accept			x-www-form-urlencoded
+// @Produce		plain
+// @Produce		html
+// @Security		ApiKeyAuth
+// @Param			throttlrPath	path		string	true	"Throttlr path"
+// @Success		200				{string}	string	"Deleted"
+// @Router			/delete/{throttlrPath} [post]
 func deleteEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
@@ -328,40 +331,32 @@ func deleteEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 			return &httpError{err, "failed to get user from key"}
 		}
 
-		endpointId := r.URL.Query().Get("id")
-		if endpointId == "" {
-			return &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+		throttlrPath := r.PathValue("throttlrPath")
+		if throttlrPath == "" {
+			return &httpError{InvalidEndpointValues, "Invalid throttlrPath value"}
 		}
 
-		enpointIdInt, err := strconv.Atoi(endpointId)
-		if err != nil {
-			return &httpError{err, "failed to convert endpoint id"}
-		}
-
-		endpoint, err := es.Get(r.Context(), enpointIdInt, userId)
+		e, err := es.Get(r.Context(), throttlrPath, userId)
 		if err != nil {
 			return &httpError{err, "failed to get endpoint"}
 		}
 
-		endpoint.Id = enpointIdInt
-
-		if err := es.Delete(r.Context(), endpoint, userId); err != nil {
+		if err := es.Delete(r.Context(), e, userId); err != nil {
 			return &httpError{err, "failed to delete endpoint"}
 		}
 
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte("Deleted"))
+		if err != nil {
+			return &httpError{err, "failed to write response"}
+		}
 		return nil
 	}
 }
 
-func validateEndpointRequest(r *http.Request, ks *db.KeyStore) (*models.Endpoint, string, *httpError) {
-	key, httpErr := validateApiKey(r, ks)
-	if httpErr != nil {
-		return nil, "", httpErr
-	}
-
+func validateEndpointRequest(r *http.Request) (*models.Endpoint, *httpError) {
 	if err := r.ParseForm(); err != nil {
-		return nil, "", &httpError{err, "failed to parse form"}
+		return nil, &httpError{err, "failed to parse form"}
 	}
 
 	maxTokens, _ := strconv.Atoi(r.FormValue("max"))
@@ -369,19 +364,19 @@ func validateEndpointRequest(r *http.Request, ks *db.KeyStore) (*models.Endpoint
 	endpoint := r.FormValue("endpoint")
 
 	if maxTokens == 0 || interval == 0 || endpoint == "" {
-		return nil, "", &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+		return nil, &httpError{InvalidEndpointValues, "Invalid endpoint values"}
 	}
 	b := models.NewBucket(models.Interval(interval), maxTokens)
 	e, err := models.NewEndpoint(endpoint, b)
 	if err != nil {
-		return nil, "", &httpError{err, "failed to create endpoint"}
+		return nil, &httpError{err, "failed to create endpoint"}
 	}
 
-	return e, key, nil
+	return e, nil
 }
 
 func validateApiKey(r *http.Request, ks *db.KeyStore) (string, *httpError) {
-	key := r.PathValue("apiKey")
+	key := r.URL.Query().Get("key")
 	exists, apiKeyId := ks.Exists(key)
 	if !exists {
 		return "", &httpError{InvalidAPIKey, "No API key"}

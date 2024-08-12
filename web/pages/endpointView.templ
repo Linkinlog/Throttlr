@@ -27,14 +27,14 @@ templ (ev endpointView) View() {
 	<div hx-ext="response-targets">
 		<form
 			method="POST"
-			action={ templ.URL(fmt.Sprintf("/delete/%s?id=%d", models.UserFromCtx(ctx).ApiKey.String(), ev.e.Id)) }
+			action={ templ.URL(fmt.Sprintf("/v1/delete/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String())) }
 			onsubmit="return confirm('Do you really want to delete? This is not reversible.');"
 		>
 			<button class="bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center">
 				@deleteBtn()
 			</button>
 		</form>
-		<form hx-boost="true" hx-target-error="#errors" hx-target="#response-p" hx-post={ fmt.Sprintf("/update/%s", models.UserFromCtx(ctx).ApiKey.String()) } action={ templ.URL(fmt.Sprintf("/update/%s", models.UserFromCtx(ctx).ApiKey.String())) } method="POST" class="mt-4">
+		<form hx-boost="true" hx-target-error="#errors" hx-target="#response-p" hx-post={ fmt.Sprintf("/v1/update/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String()) } action={ templ.URL(fmt.Sprintf("/v1/update/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String())) } method="POST" class="mt-4">
 			<input value={ strconv.Itoa(ev.e.Id) } type="hidden" name="endpoint_id" id="endpoint_id" class="border-2 border-primary rounded-lg p-2"/>
 			<div class="flex flex-col">
 				<label for="originalUrl" class="text-secondary">Original URL</label>

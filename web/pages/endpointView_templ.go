@@ -50,7 +50,7 @@ func (ev endpointView) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 templ.SafeURL = templ.URL(fmt.Sprintf("/delete/%s?id=%d", models.UserFromCtx(ctx).ApiKey.String(), ev.e.Id))
+		var templ_7745c5c3_Var2 templ.SafeURL = templ.URL(fmt.Sprintf("/v1/delete/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String()))
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var2)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -68,9 +68,9 @@ func (ev endpointView) View() templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/update/%s", models.UserFromCtx(ctx).ApiKey.String()))
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/v1/update/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/endpointView.templ`, Line: 37, Col: 150}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/endpointView.templ`, Line: 37, Col: 179}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -80,7 +80,7 @@ func (ev endpointView) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 templ.SafeURL = templ.URL(fmt.Sprintf("/update/%s", models.UserFromCtx(ctx).ApiKey.String()))
+		var templ_7745c5c3_Var4 templ.SafeURL = templ.URL(fmt.Sprintf("/v1/update/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String()))
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var4)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

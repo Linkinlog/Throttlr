@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/delete/{apiKey}": {
+        "/delete/{throttlrPath}": {
             "post": {
                 "security": [
                     {
@@ -36,14 +36,21 @@ const docTemplate = `{
                 "summary": "Delete endpoint",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Endpoint ID",
-                        "name": "id",
-                        "in": "query",
+                        "type": "string",
+                        "description": "Throttlr path",
+                        "name": "throttlrPath",
+                        "in": "path",
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/endpoints/{throttlrPath}": {
@@ -110,7 +117,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/register/{apiKey}": {
+        "/register": {
             "post": {
                 "security": [
                     {
@@ -159,10 +166,17 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
-        "/update/{apiKey}": {
+        "/update/{throttlrPath}": {
             "post": {
                 "security": [
                     {
@@ -184,15 +198,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Endpoint to register",
+                        "description": "Updated endpoint",
                         "name": "endpoint",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Endpoint ID",
-                        "name": "endpoint_id",
                         "in": "formData",
                         "required": true
                     },
@@ -216,9 +223,23 @@ const docTemplate = `{
                         "name": "max",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Throttlr path",
+                        "name": "throttlrPath",
+                        "in": "path",
+                        "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         }
     },

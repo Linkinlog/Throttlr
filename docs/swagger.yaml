@@ -5,21 +5,25 @@ info:
   title: Throttlr API
   version: 0.0.1
 paths:
-  /delete/{apiKey}:
+  /delete/{throttlrPath}:
     post:
       consumes:
       - application/x-www-form-urlencoded
       description: Users will hit this endpoint to delete an existing endpoint
       parameters:
-      - description: Endpoint ID
-        in: query
-        name: id
+      - description: Throttlr path
+        in: path
+        name: throttlrPath
         required: true
-        type: integer
+        type: string
       produces:
       - text/plain
       - text/html
-      responses: {}
+      responses:
+        "200":
+          description: Deleted
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Delete endpoint
@@ -68,7 +72,7 @@ paths:
       summary: Proxy endpoint
       tags:
       - Proxy
-  /register/{apiKey}:
+  /register:
     post:
       consumes:
       - application/x-www-form-urlencoded
@@ -98,28 +102,27 @@ paths:
       produces:
       - text/plain
       - text/html
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Register endpoint
       tags:
       - Register
-  /update/{apiKey}:
+  /update/{throttlrPath}:
     post:
       consumes:
       - application/x-www-form-urlencoded
       description: Users will hit this endpoint to update an existing endpoint
       parameters:
-      - description: Endpoint to register
+      - description: Updated endpoint
         in: formData
         name: endpoint
         required: true
         type: string
-      - description: Endpoint ID
-        in: formData
-        name: endpoint_id
-        required: true
-        type: integer
       - description: Interval, 1 = minute, 2 = hour, 3 = day, 4 = week, 5 = month
         enum:
         - 1
@@ -136,10 +139,19 @@ paths:
         name: max
         required: true
         type: integer
+      - description: Throttlr path
+        in: path
+        name: throttlrPath
+        required: true
+        type: string
       produces:
       - text/plain
       - text/html
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Update endpoint

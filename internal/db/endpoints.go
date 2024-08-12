@@ -147,7 +147,7 @@ WHERE
 	return nil
 }
 
-func (es *EndpointStore) Get(ctx context.Context, id int, userId string) (*models.Endpoint, error) {
+func (es *EndpointStore) Get(ctx context.Context, throttlrPath, userId string) (*models.Endpoint, error) {
 	query := `
 SELECT
 	endpoints.id,
@@ -162,13 +162,17 @@ JOIN
 ON
 	buckets.id = endpoints.bucket_id
 WHERE
-	endpoints.id = $1
+	endpoints.throttlr_url = $1
 	and user_id = $2
 `
 	e := &models.Endpoint{Bucket: &models.Bucket{}}
 	var URL string
-	err := es.db.QueryRow(ctx, query, id, userId).Scan(&e.Id, &e.ThrottlrPath, &URL, &e.Bucket.Max, &e.Bucket.Interval)
+	err := es.db.QueryRow(ctx, query, throttlrPath, userId).Scan(&e.Id, &e.ThrottlrPath, &URL, &e.Bucket.Max, &e.Bucket.Interval)
 	if err != nil {
+		fmt.Println(err)
+		fmt.Println("failed to get endpoint")
+		fmt.Println(throttlrPath)
+		fmt.Println(userId)
 		return nil, err
 	}
 	parsedURL, err := url.Parse(URL)
@@ -189,7 +193,7 @@ func (es *EndpointStore) Delete(ctx context.Context, endpoint *models.Endpoint, 
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
-	_, err = tx.Exec(ctx, "DELETE FROM endpoints WHERE id = $1 and user_id = $2", endpoint.Id, userId)
+	_, err = tx.Exec(ctx, "DELETE FROM endpoints WHERE throttlr_url = $1 and user_id = $2", endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}
@@ -204,18 +208,21 @@ func (es *EndpointStore) Update(ctx context.Context, endpoint *models.Endpoint, 
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
-	exists, err := es.ExistsByOriginal(ctx, endpoint, userId)
+
+	var exists bool
+	err = tx.QueryRow(ctx, "SELECT EXISTS(SELECT id from endpoints WHERE throttlr_url <> $1 and original_url = $2 and user_id = $3)", endpoint.ThrottlrPath, endpoint.OriginalUrl.String(), userId).Scan(&exists)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("endpoint already exists")
+		return fmt.Errorf("endpoint with original URL %s already exists", endpoint.OriginalUrl.String())
 	}
-	_, err = tx.Exec(ctx, "UPDATE endpoints SET original_url = $1 WHERE id = $2 and user_id = $3", endpoint.OriginalUrl, endpoint.Id, userId)
+
+	_, err = tx.Exec(ctx, "UPDATE endpoints SET original_url = $1 WHERE throttlr_url = $2 and user_id = $3", endpoint.OriginalUrl, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2 WHERE id = (SELECT bucket_id FROM endpoints WHERE id = $3 and user_id = $4)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.Id, userId)
+	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $3 and user_id = $4)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}

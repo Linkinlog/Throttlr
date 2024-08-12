@@ -25,7 +25,7 @@ CrEaTe TABLE IF NOT EXISTS endpoints (
     user_id TEXT NOT NULL,
     bucket_id integer NOT NULL,
     original_url TEXT NOT NULL,
-    throttlr_url TEXT NOT NULL,
+    throttlr_url TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
