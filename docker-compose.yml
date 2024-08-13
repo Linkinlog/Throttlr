@@ -1,7 +1,7 @@
 services:
   client:
     container_name: client
-    image: ghcr.io/linkinlog/throttlr-client:main
+    image: ghcr.io/linkinlog/throttlr-client:latest
     restart: always
     ports:
       - "8090:8080"
@@ -26,11 +26,12 @@ services:
       - throttlr
   server:
     container_name: server
-    image: ghcr.io/linkinlog/throttlr-server:main
+    image: ghcr.io/linkinlog/throttlr-server:latest
     restart: always
     ports:
       - "8091:8081"
     environment:
+      ENV: production
       SESSION_SECRET: ${SESSION_SECRET}
       SERVER_DB: ${SERVER_DB}
       CLIENT_CALLBACK_URL: ${CLIENT_CALLBACK_URL}
