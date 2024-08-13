@@ -27,6 +27,9 @@ templ (ev endpointView) View() {
 	<div hx-ext="response-targets">
 		<form
 			method="POST"
+			hx-boost="true"
+			hx-target="#response-p"
+			hx-target-error="#errors"
 			action={ templ.URL(fmt.Sprintf("/v1/delete/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String())) }
 			onsubmit="return confirm('Do you really want to delete? This is not reversible.');"
 		>
