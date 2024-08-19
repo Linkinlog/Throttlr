@@ -48,7 +48,7 @@ func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 
 	m.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, err := w.Write([]byte("OK"))
+		_, err := w.Write([]byte("Okay"))
 		if err != nil {
 			l.Error("health check failed", "error", err)
 		}
