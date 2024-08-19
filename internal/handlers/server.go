@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
@@ -43,7 +43,7 @@ func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 	}
 }
 
-func HandleServer(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
+func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("/v1/", http.StripPrefix("/v1", serveV1(l, pool)))
@@ -52,7 +52,7 @@ func HandleServer(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 	return m
 }
 
-func serveV1(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
+func serveV1(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("POST /register", apiLogHandler(l, registerEndpoint(pool)))
@@ -75,7 +75,7 @@ func serveV1(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
 // @Security		ApiKeyAuth
 // @Router			/endpoints/{throttlrPath} [get]
 // @Router			/endpoints/{throttlrPath} [post]
-func proxyEndpoint(pool *pgx.Conn) HandlerErrorFunc {
+func proxyEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
 
@@ -138,7 +138,7 @@ func modifyRequest(r *http.Request, originalUrl *url.URL) {
 // @Param			max			formData	int		true	"Max requests per interval"
 // @Success		201			{string}	string	"Created"
 // @Router			/register [post]
-func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
+func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
 
@@ -216,7 +216,7 @@ func registerEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 // @Param			throttlrPath	path		string	true	"Throttlr path"
 // @Success		201				{string}	string	"Created"
 // @Router			/update/{throttlrPath} [post]
-func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
+func updateEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	es := db.NewEndpointStore(pool)
 	ks := db.NewKeyStore(pool)
 
@@ -316,7 +316,7 @@ func updateEndpoint(pool *pgx.Conn) HandlerErrorFunc {
 // @Param			throttlrPath	path		string	true	"Throttlr path"
 // @Success		200				{string}	string	"Deleted"
 // @Router			/delete/{throttlrPath} [post]
-func deleteEndpoint(pool *pgx.Conn) HandlerErrorFunc {
+func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	ks := db.NewKeyStore(pool)
 	es := db.NewEndpointStore(pool)
 

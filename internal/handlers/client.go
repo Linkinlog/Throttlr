@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/linkinlog/throttlr/assets"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
@@ -19,7 +20,7 @@ import (
 
 const serverURL string = "http://server:8081"
 
-func HandleClient(l *slog.Logger, pool *pgx.Conn) *http.ServeMux {
+func HandleClient(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	env := internal.DefaultEnv
 
 	secret, err := env.Get("SESSION_SECRET")
@@ -109,7 +110,7 @@ func handleView(view shared.Viewer, l *slog.Logger) http.HandlerFunc {
 	}
 }
 
-func handleViewEndpoint(pool *pgx.Conn, gs sessions.Store, l *slog.Logger) http.HandlerFunc {
+func handleViewEndpoint(pool *pgxpool.Pool, gs sessions.Store, l *slog.Logger) http.HandlerFunc {
 	es := db.NewEndpointStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) {

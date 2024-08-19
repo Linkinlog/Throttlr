@@ -6,15 +6,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/linkinlog/throttlr/internal/models"
 )
 
-func NewUserStore(db *pgx.Conn) *UserStore {
+func NewUserStore(db *pgxpool.Pool) *UserStore {
 	return &UserStore{db: db}
 }
 
 type UserStore struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 func (us *UserStore) Store(ctx context.Context, u models.User) error {

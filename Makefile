@@ -7,7 +7,7 @@ server.build:
 server: server.build
 	@docker run -it --rm -p 8081:8081 server
 docker: gen
-	@docker compose -f dev-docker-compose.yml up --build -d --remove-orphans
+	@docker compose -f dev-docker-compose.yml up --build --remove-orphans
 
 migrate:
 	@goose -dir migrations sqlite ./build/db-data/throttlr.db up

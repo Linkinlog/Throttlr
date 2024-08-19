@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
@@ -31,7 +31,7 @@ func init() {
 	gob.Register(models.UserCtxKey)
 }
 
-func HandleAuth(l *slog.Logger, pool *pgx.Conn, gs sessions.Store) *http.ServeMux {
+func HandleAuth(l *slog.Logger, pool *pgxpool.Pool, gs sessions.Store) *http.ServeMux {
 	m := http.NewServeMux()
 
 	m.Handle("GET /", withUser(handleView(shared.NewLayout(pages.NewNotFound(), ""), l), gs))
@@ -62,7 +62,7 @@ func logHandler(l *slog.Logger, gs sessions.Store, h HandlerErrorFunc) http.Hand
 	}
 }
 
-func handleDelete(pool *pgx.Conn) HandlerErrorFunc {
+func handleDelete(pool *pgxpool.Pool) HandlerErrorFunc {
 	us := db.NewUserStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
@@ -86,7 +86,7 @@ func handleDelete(pool *pgx.Conn) HandlerErrorFunc {
 	}
 }
 
-func handleRegenKey(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
+func handleRegenKey(pool *pgxpool.Pool, gs sessions.Store) HandlerErrorFunc {
 	us := db.NewUserStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
@@ -121,7 +121,7 @@ func handleRegenKey(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
 	}
 }
 
-func handleProvider(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
+func handleProvider(pool *pgxpool.Pool, gs sessions.Store) HandlerErrorFunc {
 	us := db.NewUserStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
@@ -138,7 +138,7 @@ func handleProvider(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
 	}
 }
 
-func handleProviderCallback(pool *pgx.Conn, gs sessions.Store) HandlerErrorFunc {
+func handleProviderCallback(pool *pgxpool.Pool, gs sessions.Store) HandlerErrorFunc {
 	us := db.NewUserStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {

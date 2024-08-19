@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/handlers"
 )
@@ -38,12 +38,12 @@ func main() {
 		return
 	}
 
-	sqlDb, err := pgx.Connect(context.Background(), dsn)
+	sqlDb, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		s.Error("failed to open database", "err", err)
 		return
 	}
-	defer sqlDb.Close(context.Background())
+	defer sqlDb.Close()
 
 	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleClient(s, sqlDb)))
 }

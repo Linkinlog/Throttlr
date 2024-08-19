@@ -3,15 +3,15 @@ package db
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewKeyStore(db *pgx.Conn) *KeyStore {
+func NewKeyStore(db *pgxpool.Pool) *KeyStore {
 	return &KeyStore{db: db}
 }
 
 type KeyStore struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 func (ks *KeyStore) Exists(key string) (bool, int) {

@@ -6,14 +6,15 @@ import (
 	"net/url"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/linkinlog/throttlr/internal/models"
 )
 
-func NewEndpointStore(db *pgx.Conn) *EndpointStore {
+func NewEndpointStore(db *pgxpool.Pool) *EndpointStore {
 	return &EndpointStore{db: db}
 }
 
-type EndpointStore struct{ db *pgx.Conn }
+type EndpointStore struct{ db *pgxpool.Pool }
 
 func (es *EndpointStore) AllForUser(ctx context.Context, userId string) ([]*models.Endpoint, error) {
 	allQuery := `
