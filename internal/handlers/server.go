@@ -46,6 +46,14 @@ func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	m := http.NewServeMux()
 
+	m.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("OK"))
+		if err != nil {
+			l.Error("health check failed", "error", err)
+		}
+	})
+
 	m.Handle("/v1/", http.StripPrefix("/v1", serveV1(l, pool)))
 	m.Handle("/swagger/*", httpSwagger.WrapHandler)
 

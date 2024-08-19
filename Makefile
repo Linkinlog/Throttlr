@@ -6,7 +6,9 @@ server.build:
 	@docker build -t server -f ./build/Dockerfile.server .
 server: server.build
 	@docker run -it --rm -p 8081:8081 server
-docker: gen
+docker:
+	make gen
+	make lint
 	@docker compose -f dev-docker-compose.yml up --build --remove-orphans
 
 migrate:
@@ -31,7 +33,7 @@ gen:
 test:
 	@go test -v ./...
 
-lint: gen
+lint:
 	@go mod tidy
 	@templ fmt .
 	@gofumpt -d -w .

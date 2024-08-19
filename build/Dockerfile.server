@@ -10,11 +10,14 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o main -ldflags "-s -w" ./cmd/server/main.go
 
-FROM alpine:latest
+FROM alpine:latest as alpine
 
 WORKDIR /root/
+
+RUN apk add --no-cache ca-certificates; \
+    apk add --no-cache curl;
 
 COPY --from=builder /app/main .
 

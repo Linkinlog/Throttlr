@@ -32,6 +32,14 @@ func HandleClient(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	gs := sessions.NewCookieStore([]byte(secret))
 	m := http.NewServeMux()
 
+	m.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("OK"))
+		if err != nil {
+			l.Error("health check failed", "error", err)
+		}
+	})
+
 	m.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.NewAssets()))))
 
 	m.Handle("GET /about", withUser(handleView(shared.NewLayout(pages.NewAbout(), ""), l), gs))
