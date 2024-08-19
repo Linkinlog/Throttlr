@@ -89,17 +89,30 @@ func proxyEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key := r.URL.Query().Get("key")
-		exists, apiKeyId := ks.Exists(key)
+		exists, apiKeyId := ks.Exists(key, r.Context())
 		if !exists {
-			return &httpError{MissingAPIKey, "No API key"}
+			return &httpError{
+				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d", MissingAPIKey, key, apiKeyId),
+				"No API key",
+			}
 		}
-		if !ks.Valid(apiKeyId) {
-			return &httpError{InvalidAPIKey, "Invalid API key"}
+		if !ks.Valid(apiKeyId, r.Context()) {
+			return &httpError{
+				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d", InvalidAPIKey, key, apiKeyId),
+				"Invalid API key",
+			}
 		}
 
-		userId, err := ks.UserIdFromKey(key)
+		userId, err := ks.UserIdFromKey(key, r.Context())
 		if err != nil {
-			return &httpError{err, "failed to get user from key"}
+			return &httpError{
+				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d",
+					err,
+					key,
+					apiKeyId,
+				),
+				"failed to get user from key",
+			}
 		}
 
 		throttlrPath := r.PathValue("throttlrPath")
@@ -107,14 +120,41 @@ func proxyEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 		e := &models.Endpoint{ThrottlrPath: throttlrPath, Bucket: &models.Bucket{}}
 		if exists, err := es.ExistsByThrottlr(r.Context(), e, userId); !exists {
 			if err != nil {
-				return &httpError{err, "failed to check if endpoint exists"}
+				return &httpError{
+					fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
+						err,
+						key,
+						apiKeyId,
+						throttlrPath,
+						userId,
+					),
+					"failed to check if endpoint exists",
+				}
 			} else {
-				return &httpError{EndpointMissing, "Endpoint doesnt exist"}
+				return &httpError{
+					fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
+						EndpointMissing,
+						key,
+						apiKeyId,
+						throttlrPath,
+						userId,
+					),
+					"Endpoint doesnt exist",
+				}
 			}
 		}
 
 		if err := es.Fill(r.Context(), e, userId); err != nil {
-			return &httpError{err, "failed to fill endpoint"}
+			return &httpError{
+				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
+					err,
+					key,
+					apiKeyId,
+					throttlrPath,
+					userId,
+				),
+				"failed to fill endpoint",
+			}
 		}
 
 		proxy := httputil.NewSingleHostReverseProxy(e.OriginalUrl)
@@ -130,8 +170,12 @@ func proxyEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 }
 
 func modifyRequest(r *http.Request, originalUrl *url.URL) {
+	// removes the key and any other query params
 	r.URL = originalUrl
+	// makes the destination think the request is coming from the proxy
 	r.Host = originalUrl.Host
+	// clears the cookies so we dont leak any session data
+	r.Header.Del("Cookie")
 }
 
 // @Summary		Register endpoint
@@ -161,22 +205,34 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 			return httpErr
 		}
 
-		userId, err := ks.UserIdFromKey(key)
+		userId, err := ks.UserIdFromKey(key, r.Context())
 		if err != nil {
-			return &httpError{err, "failed to get user from key"}
+			return &httpError{
+				fmt.Errorf("register endpoint: failed to user id from key: %w", err),
+				"failed to get user from key",
+			}
 		}
 
 		if exists, err := es.ExistsByOriginal(r.Context(), endpoint, userId); exists {
 			if err != nil {
-				return &httpError{err, "failed to check if endpoint exists"}
+				return &httpError{
+					fmt.Errorf("register endpoint: failed to check if endpoint exists: %w", err),
+					"failed to check if endpoint exists",
+				}
 			} else {
-				return &httpError{EndpointExists, "Endpoint already exists"}
+				return &httpError{
+					fmt.Errorf("register endpoint: failed to check if endpoint exists: %w", EndpointExists),
+					"Endpoint already exists",
+				}
 			}
 		}
 
 		_, err = es.Store(r.Context(), endpoint, userId)
 		if err != nil {
-			return &httpError{err, "failed to store endpoint"}
+			return &httpError{
+				fmt.Errorf("register endpoint: failed to store endpoint: %w", err),
+				"failed to store endpoint",
+			}
 		}
 
 		proxiedURL := fmt.Sprintf("%s/v1/endpoints/%s?key=%s",
@@ -194,7 +250,10 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 			_, err = w.Write([]byte(htmlResponse))
 			if err != nil {
-				return &httpError{err, "failed to write response"}
+				return &httpError{
+					fmt.Errorf("register endpoint: failed to write response: %w", err),
+					"failed to write response",
+				}
 			}
 			return nil
 		}
@@ -204,7 +263,10 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 		_, err = w.Write([]byte(proxiedURL))
 		if err != nil {
-			return &httpError{err, "failed to write response"}
+			return &httpError{
+				fmt.Errorf("register endpoint: failed to write response: %w", err),
+				"failed to write response",
+			}
 		}
 
 		return nil
@@ -234,52 +296,82 @@ func updateEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 			return httpErr
 		}
 
-		userId, err := ks.UserIdFromKey(key)
+		userId, err := ks.UserIdFromKey(key, r.Context())
 		if err != nil {
-			return &httpError{err, "failed to get user from key"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to get user from key: %w", err),
+				"failed to get user from key",
+			}
 		}
 
 		if err := r.ParseForm(); err != nil {
-			return &httpError{err, "failed to parse form"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to parse form: %w", err),
+				"failed to parse json",
+			}
 		}
 
 		newEndpoint := r.FormValue("endpoint")
 		if newEndpoint == "" {
-			return &httpError{InvalidEndpointValues, "Invalid endpoint value"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to parse new endpoint: %w", InvalidEndpointValues),
+				"Invalid endpoint value",
+			}
 		}
 		newInterval := r.FormValue("interval")
 		newIntervalInt, err := strconv.Atoi(newInterval)
 		if newInterval == "" || err != nil {
-			return &httpError{InvalidEndpointValues, "Invalid interval value"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to parse new interval: %w", InvalidEndpointValues),
+				"Invalid interval value",
+			}
 		}
 		newMax := r.FormValue("max")
 		newMaxInt, err := strconv.Atoi(newMax)
 		if newMax == "" || err != nil {
-			return &httpError{InvalidEndpointValues, "Invalid max value"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to parse new max: %w", InvalidEndpointValues),
+				"Invalid max value",
+			}
 		}
 
 		throttlrPath := r.PathValue("throttlrPath")
 		if throttlrPath == "" {
-			return &httpError{InvalidEndpointValues, "Invalid throttlrPath value"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to parse throttlrPath: %w", InvalidEndpointValues),
+				"Invalid throttlrPath value",
+			}
 		}
 
 		endpoint, err := es.Get(r.Context(), throttlrPath, userId)
 		if err != nil {
-			return &httpError{err, "failed to get endpoint"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to get endpoint: %w", err),
+				"failed to get endpoint",
+			}
 		}
 
 		endpoint.Bucket.Max = newMaxInt
 		endpoint.Bucket.Interval = models.Interval(newIntervalInt)
 		endpoint.OriginalUrl, err = url.Parse(newEndpoint)
 		if err != nil {
-			return &httpError{err, "failed to parse new endpoint"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to parse new endpoint: %w", err),
+				"failed to parse new endpoint",
+			}
 		}
 
 		if err := es.Update(r.Context(), endpoint, userId); err != nil {
 			if strings.Contains(err.Error(), "endpoint already exists") {
-				return &httpError{EndpointExists, "Endpoint already exists"}
+				return &httpError{
+					fmt.Errorf("update endpoint: failed to update endpoint: %w", EndpointExists),
+					"Endpoint already exists",
+				}
 			}
-			return &httpError{err, "failed to update endpoint"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to update endpoint: %w", err),
+				"failed to update endpoint",
+			}
 		}
 
 		proxiedURL := fmt.Sprintf("%s/v1/endpoints/%s?key=%s",
@@ -297,7 +389,10 @@ func updateEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 			_, err = w.Write([]byte(htmlResponse))
 			if err != nil {
-				return &httpError{err, "failed to write response"}
+				return &httpError{
+					fmt.Errorf("update endpoint: failed to write response: %w", err),
+					"failed to write response",
+				}
 			}
 			return nil
 		}
@@ -307,7 +402,10 @@ func updateEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 		_, err = w.Write([]byte(proxiedURL))
 		if err != nil {
-			return &httpError{err, "failed to write response"}
+			return &httpError{
+				fmt.Errorf("update endpoint: failed to write response: %w", err),
+				"failed to write response",
+			}
 		}
 
 		return nil
@@ -334,29 +432,44 @@ func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 			return httpErr
 		}
 
-		userId, err := ks.UserIdFromKey(key)
+		userId, err := ks.UserIdFromKey(key, r.Context())
 		if err != nil {
-			return &httpError{err, "failed to get user from key"}
+			return &httpError{
+				fmt.Errorf("delete endpoint: failed to get user from key: %w", err),
+				"failed to get user from key",
+			}
 		}
 
 		throttlrPath := r.PathValue("throttlrPath")
 		if throttlrPath == "" {
-			return &httpError{InvalidEndpointValues, "Invalid throttlrPath value"}
+			return &httpError{
+				fmt.Errorf("delete endpoint: failed to parse throttlrPath: %w", InvalidEndpointValues),
+				"Invalid throttlrPath value",
+			}
 		}
 
 		e, err := es.Get(r.Context(), throttlrPath, userId)
 		if err != nil {
-			return &httpError{err, "failed to get endpoint"}
+			return &httpError{
+				fmt.Errorf("delete endpoint: failed to get endpoint: %w", err),
+				"failed to get endpoint",
+			}
 		}
 
 		if err := es.Delete(r.Context(), e, userId); err != nil {
-			return &httpError{err, "failed to delete endpoint"}
+			return &httpError{
+				fmt.Errorf("delete endpoint: failed to delete endpoint: %w", err),
+				"failed to delete endpoint",
+			}
 		}
 
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte("Deleted"))
 		if err != nil {
-			return &httpError{err, "failed to write response"}
+			return &httpError{
+				fmt.Errorf("delete endpoint: failed to write response: %w", err),
+				"failed to write response",
+			}
 		}
 		return nil
 	}
@@ -364,7 +477,10 @@ func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 func validateEndpointRequest(r *http.Request) (*models.Endpoint, *httpError) {
 	if err := r.ParseForm(); err != nil {
-		return nil, &httpError{err, "failed to parse form"}
+		return nil, &httpError{
+			fmt.Errorf("validateEndpointRequest: failed to parse form: %w", err),
+			"failed to parse form",
+		}
 	}
 
 	maxTokens, _ := strconv.Atoi(r.FormValue("max"))
@@ -372,12 +488,18 @@ func validateEndpointRequest(r *http.Request) (*models.Endpoint, *httpError) {
 	endpoint := r.FormValue("endpoint")
 
 	if maxTokens == 0 || interval == 0 || endpoint == "" {
-		return nil, &httpError{InvalidEndpointValues, "Invalid endpoint values"}
+		return nil, &httpError{
+			fmt.Errorf("validateEndpointRequest: %w", InvalidEndpointValues),
+			"Invalid endpoint values",
+		}
 	}
 	b := models.NewBucket(models.Interval(interval), maxTokens)
 	e, err := models.NewEndpoint(endpoint, b)
 	if err != nil {
-		return nil, &httpError{err, "failed to create endpoint"}
+		return nil, &httpError{
+			fmt.Errorf("validateEndpointRequest: failed to create endpoint: %w", err),
+			"failed to create endpoint",
+		}
 	}
 
 	return e, nil
@@ -385,12 +507,18 @@ func validateEndpointRequest(r *http.Request) (*models.Endpoint, *httpError) {
 
 func validateApiKey(r *http.Request, ks *db.KeyStore) (string, *httpError) {
 	key := r.URL.Query().Get("key")
-	exists, apiKeyId := ks.Exists(key)
+	exists, apiKeyId := ks.Exists(key, r.Context())
 	if !exists {
-		return "", &httpError{InvalidAPIKey, "No API key"}
+		return "", &httpError{
+			fmt.Errorf("validateApiKey: failed to validate key: %w", MissingAPIKey),
+			"No API key",
+		}
 	}
-	if !ks.Valid(apiKeyId) {
-		return "", &httpError{InvalidAPIKey, "Invalid API key"}
+	if !ks.Valid(apiKeyId, r.Context()) {
+		return "", &httpError{
+			fmt.Errorf("validateApiKey: failed to validate key: %w", InvalidAPIKey),
+			"Invalid API key",
+		}
 	}
 	return key, nil
 }
