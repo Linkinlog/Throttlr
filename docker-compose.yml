@@ -1,7 +1,7 @@
 services:
   client:
     container_name: client
-    image: ghcr.io/linkinlog/throttlr-client:latest
+    image: ghcr.io/linkinlog/throttlr-client:nightly
     restart: always
     ports:
       - "8090:8080"
@@ -33,7 +33,7 @@ services:
       - throttlr
   server:
     container_name: server
-    image: ghcr.io/linkinlog/throttlr-server:latest
+    image: ghcr.io/linkinlog/throttlr-server:nightly
     restart: always
     ports:
       - "8091:8081"
