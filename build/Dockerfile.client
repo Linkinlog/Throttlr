@@ -12,7 +12,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o main -ldflags "-s -w" ./cmd/client/main.go
 
-FROM alpine:latest as alpine
+FROM alpine:latest AS alpine
 
 WORKDIR /root/
 
