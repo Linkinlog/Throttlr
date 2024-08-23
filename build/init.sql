@@ -39,6 +39,7 @@ CREATE UNIQUE INDEX endpoints_bucket_id_idx ON endpoints (bucket_id);
 CrEaTe TABLE IF NOT EXISTS buckets (
   id SERIAL PRIMARY KEY,
   max integer NOT NULL,
+  current integer NOT NULL DEFAULT 0,
   interval integer NOT NULL,
   window_opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
