@@ -226,7 +226,7 @@ func (es *EndpointStore) Update(ctx context.Context, endpoint *models.Endpoint, 
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2, current = $3, window_opened_at = $4 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $5 and user_id = $6)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.Bucket.Current, endpoint.Bucket.WindowOpenedAt.String(), endpoint.ThrottlrPath, userId)
+	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2, current = $3 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $4 and user_id = $5)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.Bucket.Current, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}
