@@ -1,5 +1,15 @@
 package models
 
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrBucketFull = errors.New("Bucket is full")
+	ErrBucketNil  = errors.New("Bucket is nil")
+)
+
 type Interval int
 
 func (i Interval) String() string {
@@ -31,10 +41,13 @@ func NewBucket(interval Interval, max int) *Bucket {
 	return &Bucket{
 		Interval: interval,
 		Max:      max,
+		Current:  0,
 	}
 }
 
 type Bucket struct {
-	Interval Interval
-	Max      int
+	Interval       Interval
+	Max            int
+	Current        int
+	WindowOpenedAt time.Time
 }

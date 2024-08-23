@@ -34,6 +34,57 @@ paths:
       consumes:
       - application/x-www-form-urlencoded
       - application/json
+      description: Users will hit this endpoint to access the throttled endpoint
+      parameters:
+      - description: Throttlr path
+        in: path
+        name: throttlrPath
+        required: true
+        type: string
+      produces:
+      - text/plain
+      - application/json
+      - text/html
+      responses:
+        "429":
+          description: Too many requests
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Throttle endpoint
+      tags:
+      - Throttlr
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Users will hit this endpoint to access the throttled endpoint
+      parameters:
+      - description: Throttlr path
+        in: path
+        name: throttlrPath
+        required: true
+        type: string
+      produces:
+      - text/plain
+      - application/json
+      - text/html
+      responses:
+        "429":
+          description: Too many requests
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Throttle endpoint
+      tags:
+      - Throttlr
+  /proxy/{throttlrPath}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
       description: Users will hit this endpoint to access the proxied endpoint
       parameters:
       - description: Throttlr path

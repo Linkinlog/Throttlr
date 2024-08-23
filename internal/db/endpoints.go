@@ -23,7 +23,9 @@ SELECT
   original_url,
   throttlr_url,
   max,
-  interval
+  interval,
+  current,
+  window_opened_at
 FROM
   endpoints
   JOIN api_keys on api_keys.user_id = endpoints.user_id
@@ -44,7 +46,7 @@ where
 			Bucket: &models.Bucket{},
 		}
 		var URL string
-		err := rows.Scan(&e.Id, &URL, &e.ThrottlrPath, &e.Bucket.Max, &e.Bucket.Interval)
+		err := rows.Scan(&e.Id, &URL, &e.ThrottlrPath, &e.Bucket.Max, &e.Bucket.Interval, &e.Bucket.Current, &e.Bucket.WindowOpenedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan endpoint: %w", err)
 		}
@@ -52,6 +54,7 @@ where
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse URL: %w", err)
 		}
+
 		e.OriginalUrl = parsedURL
 		endpoints = append(endpoints, e)
 	}
@@ -89,7 +92,7 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId s
 	}
 
 	var bucketId int
-	err = tx.QueryRow(ctx, "INSERT INTO buckets (max, interval) VALUES ($1, $2) Returning id", e.Bucket.Max, e.Bucket.Interval).Scan(&bucketId)
+	err = tx.QueryRow(ctx, "INSERT INTO buckets (max, interval, current) VALUES ($1, $2, $3) Returning id", e.Bucket.Max, e.Bucket.Interval, e.Bucket.Current).Scan(&bucketId)
 	if err != nil {
 		return 0, err
 	}
@@ -122,7 +125,9 @@ SELECT
 	throttlr_url,
 	original_url,
 	max,
-	interval
+	interval,
+    current,
+    window_opened_at
 FROM
 	endpoints
 JOIN
@@ -134,7 +139,7 @@ WHERE
 	and user_id = $2
 `
 	var URL string
-	err := es.db.QueryRow(ctx, query, endpoint.ThrottlrPath, userId).Scan(&endpoint.Id, &endpoint.ThrottlrPath, &URL, &endpoint.Bucket.Max, &endpoint.Bucket.Interval)
+	err := es.db.QueryRow(ctx, query, endpoint.ThrottlrPath, userId).Scan(&endpoint.Id, &endpoint.ThrottlrPath, &URL, &endpoint.Bucket.Max, &endpoint.Bucket.Interval, &endpoint.Bucket.Current, &endpoint.Bucket.WindowOpenedAt)
 	if err != nil {
 		return err
 	}
@@ -155,7 +160,9 @@ SELECT
 	throttlr_url,
 	original_url,
 	max,
-	interval
+	interval,
+    current,
+    window_opened_at
 FROM
 	endpoints
 JOIN
@@ -168,12 +175,8 @@ WHERE
 `
 	e := &models.Endpoint{Bucket: &models.Bucket{}}
 	var URL string
-	err := es.db.QueryRow(ctx, query, throttlrPath, userId).Scan(&e.Id, &e.ThrottlrPath, &URL, &e.Bucket.Max, &e.Bucket.Interval)
+	err := es.db.QueryRow(ctx, query, throttlrPath, userId).Scan(&e.Id, &e.ThrottlrPath, &URL, &e.Bucket.Max, &e.Bucket.Interval, &e.Bucket.Current, &e.Bucket.WindowOpenedAt)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("failed to get endpoint")
-		fmt.Println(throttlrPath)
-		fmt.Println(userId)
 		return nil, err
 	}
 	parsedURL, err := url.Parse(URL)
@@ -223,7 +226,31 @@ func (es *EndpointStore) Update(ctx context.Context, endpoint *models.Endpoint, 
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $3 and user_id = $4)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.ThrottlrPath, userId)
+	_, err = tx.Exec(ctx, "UPDATE buckets SET max = $1, interval = $2, current = $3, window_opened_at = $4 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $5 and user_id = $6)", endpoint.Bucket.Max, endpoint.Bucket.Interval, endpoint.Bucket.Current, endpoint.Bucket.WindowOpenedAt.String(), endpoint.ThrottlrPath, userId)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (es *EndpointStore) UpdateBucketCount(ctx context.Context, endpoint *models.Endpoint, userId string) error {
+	tx, err := es.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, "UPDATE buckets SET current = $1 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $2 and user_id = $3)", endpoint.Bucket.Current, endpoint.ThrottlrPath, userId)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (es *EndpointStore) UpdateWindowOpenedAt(ctx context.Context, endpoint *models.Endpoint, userId string) error {
+	tx, err := es.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, "UPDATE buckets SET window_opened_at = $1 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $2 and user_id = $3)", endpoint.Bucket.WindowOpenedAt, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}

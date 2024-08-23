@@ -45,7 +45,8 @@ func main() {
 	}
 	defer sqlDb.Close()
 
-	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleClient(s, sqlDb)))
+	mux := handlers.HandleClient(s, sqlDb)
+	s.Error("main.go", "err", http.ListenAndServe(":"+port, mux))
 }
 
 func setupAuth() error {

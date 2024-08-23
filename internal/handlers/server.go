@@ -9,12 +9,15 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/linkinlog/throttlr/docs"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/db"
 	"github.com/linkinlog/throttlr/internal/models"
-	httpSwagger "github.com/swaggo/http-swagger"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // @title						Throttlr API
@@ -37,8 +40,12 @@ func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpErr := h(w, r)
 		if httpErr != nil {
+			status := http.StatusInternalServerError
+			if errors.Is(httpErr.error, models.ErrBucketFull) {
+				status = http.StatusTooManyRequests
+			}
+			http.Error(w, httpErr.display, status)
 			l.Error("api handler error", "error", httpErr.Error())
-			http.Error(w, httpErr.display, http.StatusInternalServerError)
 		}
 	}
 }
@@ -55,7 +62,10 @@ func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	})
 
 	m.Handle("/v1/", http.StripPrefix("/v1", serveV1(l, pool)))
-	m.Handle("/swagger/*", httpSwagger.WrapHandler)
+	m.Handle("GET /swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),                        // The url pointing to API definition
+		httpSwagger.DefaultModelsExpandDepth(httpSwagger.HideModel), // Models will not be expanded
+	))
 
 	return m
 }
@@ -66,9 +76,98 @@ func serveV1(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	m.Handle("POST /register", apiLogHandler(l, registerEndpoint(pool)))
 	m.Handle("POST /update/{throttlrPath}", apiLogHandler(l, updateEndpoint(pool)))
 	m.Handle("POST /delete/{throttlrPath}", apiLogHandler(l, deleteEndpoint(pool)))
-	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, proxyEndpoint(pool)))
+	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, throttleEndpoint(pool)))
+	m.Handle("/proxy/{throttlrPath}", apiLogHandler(l, proxyEndpoint(pool)))
 
 	return m
+}
+
+// @Summary		Throttle endpoint
+// @Description	Users will hit this endpoint to access the throttled endpoint
+// @Tags			Throttlr
+// @Accept			x-www-form-urlencoded
+// @Accept			json
+// @Produce		plain
+// @Produce		json
+// @Produce		html
+// @Param			throttlrPath	path	string	true	"Throttlr path"
+// @Security		ApiKeyAuth
+// @Router			/endpoints/{throttlrPath} [get]
+// @Router			/endpoints/{throttlrPath} [post]
+// @Failure		429	{string}	string	"Too many requests"
+func throttleEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
+	es := db.NewEndpointStore(pool)
+	var m sync.Mutex
+	return func(w http.ResponseWriter, r *http.Request) *httpError {
+		if r.Context().Err() != nil {
+			return &httpError{
+				fmt.Errorf("throttle endpoint: %w", r.Context().Err()),
+				"context error",
+			}
+		}
+		m.Lock()
+		defer m.Unlock()
+
+		e, uId, httpErr := validateEndpointRequest(pool, r)
+		if httpErr != nil {
+			return httpErr
+		}
+
+		if e.Bucket == nil {
+			return &httpError{
+				fmt.Errorf("throttle endpoint: %w", models.ErrBucketNil),
+				"Bucket is nil",
+			}
+		}
+
+		dur := time.Minute
+		switch e.Bucket.Interval {
+		case models.Hour:
+			dur = time.Hour
+		case models.Day:
+			dur = time.Hour * 24
+		case models.Week:
+			dur = time.Hour * 24 * 7
+		case models.Month:
+			dur = time.Hour * 24 * 30
+		}
+
+		if e.Bucket.WindowOpenedAt.Add(dur).Before(time.Now()) {
+			e.Bucket.WindowOpenedAt = time.Now()
+			e.Bucket.Current = 0
+			if err := es.UpdateWindowOpenedAt(r.Context(), e, uId); err != nil {
+				return &httpError{
+					fmt.Errorf("throttle endpoint: failed to update window opened at: %w", err),
+					"failed to update window opened at",
+				}
+			}
+		}
+
+		if e.Bucket.Current >= e.Bucket.Max {
+			return &httpError{
+				fmt.Errorf("throttle endpoint: %w", models.ErrBucketFull),
+				"Bucket full",
+			}
+		}
+
+		proxy := httputil.NewSingleHostReverseProxy(e.OriginalUrl)
+		originalDirector := proxy.Director
+		proxy.Director = func(req *http.Request) {
+			originalDirector(req)
+			modifyRequest(req, e.OriginalUrl)
+		}
+
+		e.Bucket.Current = e.Bucket.Current + 1
+		if err := es.UpdateBucketCount(r.Context(), e, uId); err != nil {
+			return &httpError{
+				fmt.Errorf("throttle endpoint: %w", err),
+				"failed to update bucket",
+			}
+		}
+
+		proxy.ServeHTTP(w, r)
+		return nil
+	}
 }
 
 // @Summary		Proxy endpoint
@@ -81,80 +180,13 @@ func serveV1(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 // @Produce		html
 // @Param			throttlrPath	path	string	true	"Throttlr path"
 // @Security		ApiKeyAuth
-// @Router			/endpoints/{throttlrPath} [get]
-// @Router			/endpoints/{throttlrPath} [post]
+// @Router			/proxy/{throttlrPath} [get]
+// @Router			/proxy/{throttlrPath} [post]
 func proxyEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
-	ks := db.NewKeyStore(pool)
-	es := db.NewEndpointStore(pool)
-
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
-		key := r.URL.Query().Get("key")
-		exists, apiKeyId := ks.Exists(key, r.Context())
-		if !exists {
-			return &httpError{
-				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d", MissingAPIKey, key, apiKeyId),
-				"No API key",
-			}
-		}
-		if !ks.Valid(apiKeyId, r.Context()) {
-			return &httpError{
-				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d", InvalidAPIKey, key, apiKeyId),
-				"Invalid API key",
-			}
-		}
-
-		userId, err := ks.UserIdFromKey(key, r.Context())
-		if err != nil {
-			return &httpError{
-				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d",
-					err,
-					key,
-					apiKeyId,
-				),
-				"failed to get user from key",
-			}
-		}
-
-		throttlrPath := r.PathValue("throttlrPath")
-
-		e := &models.Endpoint{ThrottlrPath: throttlrPath, Bucket: &models.Bucket{}}
-		if exists, err := es.ExistsByThrottlr(r.Context(), e, userId); !exists {
-			if err != nil {
-				return &httpError{
-					fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
-						err,
-						key,
-						apiKeyId,
-						throttlrPath,
-						userId,
-					),
-					"failed to check if endpoint exists",
-				}
-			} else {
-				return &httpError{
-					fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
-						EndpointMissing,
-						key,
-						apiKeyId,
-						throttlrPath,
-						userId,
-					),
-					"Endpoint doesnt exist",
-				}
-			}
-		}
-
-		if err := es.Fill(r.Context(), e, userId); err != nil {
-			return &httpError{
-				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
-					err,
-					key,
-					apiKeyId,
-					throttlrPath,
-					userId,
-				),
-				"failed to fill endpoint",
-			}
+		e, _, httpErr := validateEndpointRequest(pool, r)
+		if httpErr != nil {
+			return httpErr
 		}
 
 		proxy := httputil.NewSingleHostReverseProxy(e.OriginalUrl)
@@ -195,7 +227,7 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	es := db.NewEndpointStore(pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
-		endpoint, httpErr := validateEndpointRequest(r)
+		endpoint, httpErr := validateRegisterEndpointRequest(r)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -475,7 +507,83 @@ func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	}
 }
 
-func validateEndpointRequest(r *http.Request) (*models.Endpoint, *httpError) {
+func validateEndpointRequest(pool *pgxpool.Pool, r *http.Request) (*models.Endpoint, string, *httpError) {
+	ks := db.NewKeyStore(pool)
+	es := db.NewEndpointStore(pool)
+
+	key := r.URL.Query().Get("key")
+	exists, apiKeyId := ks.Exists(key, r.Context())
+	if !exists {
+		return nil, "", &httpError{
+			fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d", MissingAPIKey, key, apiKeyId),
+			"No API key",
+		}
+	}
+	if !ks.Valid(apiKeyId, r.Context()) {
+		return nil, "", &httpError{
+			fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d", InvalidAPIKey, key, apiKeyId),
+			"Invalid API key",
+		}
+	}
+
+	userId, err := ks.UserIdFromKey(key, r.Context())
+	if err != nil {
+		return nil, "", &httpError{
+			fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d",
+				err,
+				key,
+				apiKeyId,
+			),
+			"failed to get user from key",
+		}
+	}
+
+	throttlrPath := r.PathValue("throttlrPath")
+
+	e := &models.Endpoint{ThrottlrPath: throttlrPath, Bucket: &models.Bucket{}}
+	if exists, err := es.ExistsByThrottlr(r.Context(), e, userId); !exists {
+		if err != nil {
+			return nil, "", &httpError{
+				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
+					err,
+					key,
+					apiKeyId,
+					throttlrPath,
+					userId,
+				),
+				"failed to check if endpoint exists",
+			}
+		} else {
+			return nil, "", &httpError{
+				fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
+					EndpointMissing,
+					key,
+					apiKeyId,
+					throttlrPath,
+					userId,
+				),
+				"Endpoint doesnt exist",
+			}
+		}
+	}
+
+	if err := es.Fill(r.Context(), e, userId); err != nil {
+		return nil, "", &httpError{
+			fmt.Errorf("proxy error: %w, key: %s, apiKeyId: %d, throttlrPath: %s, userId: %s",
+				err,
+				key,
+				apiKeyId,
+				throttlrPath,
+				userId,
+			),
+			"failed to fill endpoint",
+		}
+	}
+
+	return e, userId, nil
+}
+
+func validateRegisterEndpointRequest(r *http.Request) (*models.Endpoint, *httpError) {
 	if err := r.ParseForm(); err != nil {
 		return nil, &httpError{
 			fmt.Errorf("validateEndpointRequest: failed to parse form: %w", err),

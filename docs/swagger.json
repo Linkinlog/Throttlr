@@ -53,6 +53,84 @@
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Users will hit this endpoint to access the throttled endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain",
+                    "application/json",
+                    "text/html"
+                ],
+                "tags": [
+                    "Throttlr"
+                ],
+                "summary": "Throttle endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Throttlr path",
+                        "name": "throttlrPath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "429": {
+                        "description": "Too many requests",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Users will hit this endpoint to access the throttled endpoint",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain",
+                    "application/json",
+                    "text/html"
+                ],
+                "tags": [
+                    "Throttlr"
+                ],
+                "summary": "Throttle endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Throttlr path",
+                        "name": "throttlrPath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "429": {
+                        "description": "Too many requests",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/proxy/{throttlrPath}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Users will hit this endpoint to access the proxied endpoint",
                 "consumes": [
                     "application/x-www-form-urlencoded",

@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/linkinlog/throttlr/docs"
 	"github.com/linkinlog/throttlr/internal"
 	"github.com/linkinlog/throttlr/internal/handlers"
 )
@@ -35,5 +34,6 @@ func main() {
 	}
 	defer sqlDb.Close()
 
-	s.Error("main.go", "err", http.ListenAndServe(":"+port, handlers.HandleServer(s, sqlDb)))
+	mux := handlers.HandleServer(s, sqlDb)
+	s.Error("main.go", "err", http.ListenAndServe(":"+port, mux))
 }
