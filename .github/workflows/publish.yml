@@ -95,11 +95,3 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
-  deploy:
-    needs: build-and-publish
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to Coolify
-        run: |
-          curl -H 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}' ${{ secrets.COOLIFY_WEBHOOK }}
