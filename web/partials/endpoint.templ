@@ -12,7 +12,15 @@ templ Endpoint(e *models.Endpoint, key string) {
 		<p class="text-md md:text-2xl text-secondary mx-1">{ fmt.Sprintf("%dreqs/%s", e.Bucket.Max, e.Bucket.Interval) }</p>
 		<div class="flex justify-between">
 			<a target="_blank" href={ templ.URL(fmt.Sprintf("%s/v1/endpoints/%s?key=%s", internal.ServerCallbackURL(), e.ThrottlrPath, key)) } class="bg-primary w-8 h-8 md:w-12 md:h-12 rounded flex justify-center items-center mx-1"><img width="24" height="24" src="https://img.icons8.com/ios-filled/50/link--v1.png" alt="link--v1"/></a>
-			<a href={ templ.URL(fmt.Sprintf("/views/endpoints/%s", e.ThrottlrPath)) } class="bg-primary w-8 h-8 md:w-12 md:h-12 rounded flex justify-center items-center mx-1"><img width="24" height="24" src="https://img.icons8.com/material-two-tone/24/view-file.png" alt="view-endpoint"/></a>
+			<a
+				href={ templ.URL(fmt.Sprintf("/views/endpoints/%s", e.ThrottlrPath)) }
+				hx-get={ fmt.Sprintf("/views/endpoints/%s", e.ThrottlrPath) }
+				hx-replace-url={ fmt.Sprintf("/views/endpoints/%s", e.ThrottlrPath) }
+				hx-select="main"
+				hx-target="main"
+				hx-swap="outerHTML"
+				class="bg-primary w-8 h-8 md:w-12 md:h-12 rounded flex justify-center items-center mx-1"
+			><img width="24" height="24" src="https://img.icons8.com/material-two-tone/24/view-file.png" alt="view-endpoint"/></a>
 		</div>
 	</div>
 }

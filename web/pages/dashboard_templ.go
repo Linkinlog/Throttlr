@@ -47,7 +47,7 @@ func (d dashboard) View() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section class=\"mt-4\"><a href=\"/endpoints\"><button class=\"bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight\">+</button></a></section>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section class=\"mt-4\"><a href=\"/endpoints\" hx-get=\"/endpoints\" hx-replace-url=\"/endpoints\" hx-select=\"main\" hx-target=\"main\" hx-swap=\"outerHTML\"><button class=\"bg-primary text-dark rounded-lg w-12 h-12 text-4xl font-extralight\">+</button></a></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -6,6 +6,10 @@ script toggleNav(id string) {
         document.getElementById(id).classList.toggle('active');
 }
 
+script closeNav(id string) {
+        document.getElementById(id).classList.remove('active');
+}
+
 templ Navbar() {
 	<nav class="flex justify-between mb-6">
 		@siteNav()
@@ -16,7 +20,15 @@ templ Navbar() {
 			<path d="M4 12l16 0"></path>
 			<path d="M4 18l16 0"></path>
 		</svg>
-		<a href="/" class="text-primary self-center">
+		<a
+			href="/"
+			hx-get="/"
+			hx-replace-url="/"
+			class="text-primary self-center"
+			hx-select="main"
+			hx-target="main"
+			hx-swap="outerHTML"
+		>
 			<img src="/assets/logo-full.webp" alt="logo" class="w-60 h-8 self-end"/>
 		</a>
 		<svg onclick={ toggleNav("profileNav") } xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-circle block md:hidden" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#865DFF" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -44,9 +56,27 @@ templ siteNav() {
 }
 
 templ siteNavList() {
-	<a href="/" class="block">Home</a>
-	<a href="/about" class="block">About</a>
-	<a href="https://docs.trythrottlr.com" target="_blank" class="block">Docs</a>
+	<a
+		href="/"
+		hx-get="/"
+		hx-replace-url="/"
+		class="block"
+		hx-select="main"
+		hx-target="main"
+		hx-swap="outerHTML"
+		onclick={ closeNav("siteNav") }
+	>Home</a>
+	<a
+		href="/about"
+		hx-get="/about"
+		hx-replace-url="/about"
+		class="block"
+		hx-select="main"
+		hx-target="main"
+		hx-swap="outerHTML"
+		onclick={ closeNav("siteNav") }
+	>About</a>
+	<a href="https://docs.trythrottlr.com" target="_blank" class="block" onclick={ closeNav("siteNav") }>Docs</a>
 }
 
 templ profileNav() {
@@ -65,10 +95,28 @@ templ profileNav() {
 templ profileNavList() {
 	if models.UserSignedIn(ctx) {
 		<p class="block text-ellipsis overflow-hidden p-4">{ models.UserFromCtx(ctx).Name }</p>
-		<a href="/settings" class="block p-4">Settings</a>
-		<a href="/auth/sign-out" class="block p-4">Sign Out</a>
+		<a
+			href="/settings"
+			hx-get="/settings"
+			hx-replace-url="/settings"
+			hx-select="main"
+			hx-target="main"
+			hx-swap="outerHTML"
+			class="block p-4"
+			onclick={ closeNav("profileNav") }
+		>Settings</a>
+		<a href="/auth/sign-out" onclick={ closeNav("profileNav") } class="block p-4">Sign Out</a>
 	} else {
-		<a href="/sign-in" class="block p-4">Sign In</a>
+		<a
+			href="/sign-in"
+			hx-get="/sign-in"
+			hx-replace-url="/sign-in"
+			hx-select="main"
+			hx-target="main"
+			hx-swap="outerHTML"
+			class="block p-4"
+			onclick={ closeNav("profileNav") }
+		>Sign In</a>
 	}
 }
 
