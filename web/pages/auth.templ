@@ -44,14 +44,14 @@ templ (a auth) hero() {
 }
 
 templ (a auth) googleOauth() {
-	<a href="/auth/google" class="flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4">
+	<a href="/auth/google" class="flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4 relative floaty">
 		<img src="/assets/google.png" class="w-6 h-6"/>
 		<p class="text-center">Sign { getText(a.hasAcc) } with Google</p>
 	</a>
 }
 
 templ (a auth) githubOauth() {
-	<a href="/auth/github" class="flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4">
+	<a href="/auth/github" class="flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4 relative floaty">
 		@githubSvg()
 		<p class="text-center">Sign { getText(a.hasAcc) } with GitHub</p>
 	</a>

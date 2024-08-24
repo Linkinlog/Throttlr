@@ -39,7 +39,7 @@ func (s settings) View() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section class=\"mt-4\"><section><p class=\"text-secondary text-2xl text-center\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section class=\"mt-4\"><section><p class=\"text-secondary text-3xl text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -52,7 +52,7 @@ func (s settings) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p class=\"text-secondary text-xs text-center\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p class=\"text-secondary text-sm text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -73,7 +73,7 @@ func (s settings) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</section><section><h2 class=\"text-red-500 text-2xl\">Danger Zone</h2><ul class=\"border border-secondary rounded\"><li class=\"flex justify-between items-center mb-2 border-b border-secondary py-8 mx-4\"><p class=\"text-secondary xl:text-xl\">Delete Your Account</p><form action=\"/auth/delete\" onsubmit=\"return confirm(&#39;Do you really want to delete? This will delete your entire account.&#39;);\"><button class=\"bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</section><section><h2 class=\"text-red-500 text-2xl\">Danger Zone</h2><ul class=\"border border-secondary rounded\"><li class=\"flex justify-between items-center mb-2 border-b border-secondary py-8 mx-4\"><p class=\"text-secondary xl:text-xl\">Delete Your Account</p><form action=\"/auth/delete\" onsubmit=\"return confirm(&#39;Do you really want to delete? This will delete your entire account.&#39;);\"><button class=\"bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center relative floaty\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -81,7 +81,7 @@ func (s settings) View() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button></form></li><li class=\"flex justify-between items-center mb-2 py-8 mx-4\"><p class=\"text-secondary xl:text-xl\">Regenerate Your API Key</p><form action=\"/auth/regenerate\" onsubmit=\"return confirm(&#39;Do you really want to invalidate and regenerate your API key?&#39;);\"><button class=\"bg-blue-500 text-dark rounded-lg w-12 h-12 text-sm font-extralight flex justify-center items-center\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button></form></li><li class=\"flex justify-between items-center mb-2 py-8 mx-4\"><p class=\"text-secondary xl:text-xl\">Regenerate Your API Key</p><form action=\"/auth/regenerate\" onsubmit=\"return confirm(&#39;Do you really want to invalidate and regenerate your API key?&#39;);\"><button class=\"bg-blue-500 text-dark rounded-lg w-12 h-12 text-sm font-extralight flex justify-center items-center relative floaty\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

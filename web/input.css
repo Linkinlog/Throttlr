@@ -47,3 +47,7 @@
 a {
   text-decoration: underline;
 }
+
+.floaty:hover {
+    top: -1px;
+}

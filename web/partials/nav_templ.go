@@ -70,7 +70,7 @@ func Navbar() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" xmlns=\"http://www.w3.org/2000/svg\" class=\"icon icon-tabler icon-tabler-menu-2block md:hidden\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"#865DFF\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M4 6l16 0\"></path> <path d=\"M4 12l16 0\"></path> <path d=\"M4 18l16 0\"></path></svg> <a href=\"/\" hx-get=\"/\" hx-replace-url=\"/\" class=\"text-primary self-center\" hx-select=\"main\" hx-target=\"main\" hx-swap=\"outerHTML\"><img src=\"/assets/logo-full.webp\" alt=\"logo\" class=\"w-60 h-8 self-end\"></a> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" xmlns=\"http://www.w3.org/2000/svg\" class=\"icon icon-tabler icon-tabler-menu-2block md:hidden\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"#865DFF\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M4 6l16 0\"></path> <path d=\"M4 12l16 0\"></path> <path d=\"M4 18l16 0\"></path></svg> <a href=\"/\" hx-get=\"/\" hx-replace-url=\"/\" class=\"text-primary self-center\" hx-select=\"main\" hx-target=\"main\" hx-swap=\"outerHTML\"><img src=\"/assets/logo-full.webp\" alt=\"logo\" class=\"w-60 h-8 xl:w-72 xl:h-12 self-end\"></a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -383,7 +383,7 @@ func desktopSiteNav() templ.Component {
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-[40rem] text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-[40rem] text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly h-full items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -415,7 +415,7 @@ func desktopProfileNav() templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-[40rem] text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly text-nowrap\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<aside class=\"hidden md:block w-[40rem] text-lg\"><ul class=\"leading-[5rem] text-secondary flex flex-row justify-evenly text-nowrap h-full items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

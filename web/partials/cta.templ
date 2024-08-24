@@ -3,7 +3,7 @@ package partials
 templ CTA(cta, link string) {
 	<nav class="flex w-full justify-between items-center">
 		<a
-			class="bg-primary text-dark rounded-full text-base p-5 grow text-center no-underline"
+			class="bg-primary text-dark rounded-full text-base p-5 grow text-center no-underline relative floaty"
 			href={ templ.URL(link) }
 			hx-get={ link }
 			hx-replace-url={ link }
@@ -12,7 +12,7 @@ templ CTA(cta, link string) {
 			hx-swap="outerHTML"
 		>{ cta }</a>
 		<a
-			class="p-5 bg-primary text-dark rounded-full ml-2 min-w-[7.5rem] flex justify-center"
+			class="p-5 bg-primary text-dark rounded-full ml-2 min-w-[7.5rem] flex justify-center relative floaty"
 			href={ templ.URL(link) }
 			hx-get={ link }
 			hx-replace-url={ link }

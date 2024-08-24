@@ -23,7 +23,7 @@ func CTA(cta, link string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<nav class=\"flex w-full justify-between items-center\"><a class=\"bg-primary text-dark rounded-full text-base p-5 grow text-center no-underline\" href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<nav class=\"flex w-full justify-between items-center\"><a class=\"bg-primary text-dark rounded-full text-base p-5 grow text-center no-underline relative floaty\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -71,7 +71,7 @@ func CTA(cta, link string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a> <a class=\"p-5 bg-primary text-dark rounded-full ml-2 min-w-[7.5rem] flex justify-center\" href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a> <a class=\"p-5 bg-primary text-dark rounded-full ml-2 min-w-[7.5rem] flex justify-center relative floaty\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

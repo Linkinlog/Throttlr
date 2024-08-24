@@ -146,7 +146,7 @@ func throttleEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 		if e.Bucket.Current >= e.Bucket.Max {
 			return &httpError{
 				fmt.Errorf("throttle endpoint: %w", models.ErrBucketFull),
-				"Bucket full",
+				"Rate limit reached, try again later or increase rate limit",
 			}
 		}
 
@@ -495,14 +495,10 @@ func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 			}
 		}
 
-		w.WriteHeader(http.StatusOK)
-		_, err = w.Write([]byte("Deleted"))
-		if err != nil {
-			return &httpError{
-				fmt.Errorf("delete endpoint: failed to write response: %w", err),
-				"failed to write response",
-			}
-		}
+		url := internal.ClientCallbackURL()
+		w.Header().Set("location", url+"/")
+		w.WriteHeader(http.StatusSeeOther)
+
 		return nil
 	}
 }

@@ -11,23 +11,7 @@ import (
 	"github.com/linkinlog/throttlr/internal/handlers"
 )
 
-var (
-	port        = "8080"
-	dsn         = "postgres://username:password@localhost:5432/database_name"
-	env         = internal.DefaultEnv
-	callbackUrl = "http://localhost" + port
-)
-
-func init() {
-	// todo move these to env
-	if d, err := env.Get("CLIENT_DB"); err == nil {
-		dsn = d
-	}
-
-	if url, err := env.Get("CLIENT_CALLBACK_URL"); err == nil {
-		callbackUrl = url
-	}
-}
+var port = "8080"
 
 func main() {
 	s := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
@@ -37,6 +21,8 @@ func main() {
 		s.Error("failed to setup auth", "err", err)
 		return
 	}
+
+	dsn := internal.ClientDB()
 
 	sqlDb, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
@@ -50,6 +36,7 @@ func main() {
 }
 
 func setupAuth() error {
+	callbackUrl := internal.ClientCallbackURL()
 	if err := internal.SetupGothic(callbackUrl); err != nil {
 		return err
 	}

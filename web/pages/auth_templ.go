@@ -138,7 +138,7 @@ func (a auth) googleOauth() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/auth/google\" class=\"flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4\"><img src=\"/assets/google.png\" class=\"w-6 h-6\"><p class=\"text-center\">Sign ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/auth/google\" class=\"flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4 relative floaty\"><img src=\"/assets/google.png\" class=\"w-6 h-6\"><p class=\"text-center\">Sign ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -175,7 +175,7 @@ func (a auth) githubOauth() templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/auth/github\" class=\"flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/auth/github\" class=\"flex self-center items-center justify-between p-5 bg-primary text-dark rounded-full w-60 mb-4 relative floaty\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

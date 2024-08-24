@@ -27,13 +27,10 @@ templ (ev endpointView) View() {
 	<div hx-ext="response-targets">
 		<form
 			method="POST"
-			hx-boost="true"
-			hx-target="#response-p"
-			hx-target-error="#errors"
 			action={ templ.URL(fmt.Sprintf("/v1/delete/%s?key=%s", ev.e.ThrottlrPath, models.UserFromCtx(ctx).ApiKey.String())) }
 			onsubmit="return confirm('Do you really want to delete? This is not reversible.');"
 		>
-			<button class="bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center">
+			<button class="bg-red-500 text-dark rounded-lg w-12 h-12 text-4xl font-extralight flex justify-center items-center relative floaty">
 				@deleteBtn()
 			</button>
 		</form>
@@ -61,7 +58,7 @@ templ (ev endpointView) View() {
 				<label for="max" class="text-secondary">Max Requests Per Interval</label>
 				<input value={ strconv.Itoa(ev.e.Bucket.Max) } type="number" name="max" id="max" class="border-2 border-primary rounded-lg p-2"/>
 			</div>
-			<button type="submit" class="bg-primary text-dark rounded-lg w-full h-12 text-2xl mt-4">Update Endpoint</button>
+			<button type="submit" class="bg-primary text-dark rounded-lg w-full h-12 text-2xl mt-4 relative floaty">Update Endpoint</button>
 		</form>
 		<p id="response-p" class="w-full text-center text-secondary p-2 mb-4 rounded no-underline"></p>
 		<p id="errors" class="w-full text-center text-red-500 p-2 mb-4 rounded no-underline"></p>

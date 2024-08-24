@@ -26,45 +26,33 @@ templ (l landing) hero() {
 		@landingSvg()
 		<p class="text-secondary text-5xl/tight font-bold">Control All</p>
 		<p class="text-secondary text-5xl/tight font-bold">Outbound</p>
-		<p class="text-secondary text-5xl/tight font-bold">Requests</p>
+		<p class="text-secondary text-5xl/tight font-bold mb-8">Requests</p>
 		<p class="text-secondary text-xl/tight text-center font-light pt-1 mb-4">Throttlr is your comprehensive solution for managing and optimizing API usage. Prevent excess usage with customizable limits, monitor in real time, and safeguard performance with alerts and insights.</p>
 		@partials.CTA("Get started for free", "/sign-up")
 	</section>
 }
 
 templ limits() {
-	<section class="flex flex-col items-center mt-4">
+	<section class="flex flex-col items-center mt-8">
 		<p class="text-secondary text-5xl/tight font-bold">Set limits</p>
 		<p class="text-secondary text-5xl/tight font-bold">{ templ.EscapeString("for") } <span class="underline">all</span> your</p>
-		<p class="text-secondary text-5xl/tight font-bold">services</p>
+		<p class="text-secondary text-5xl/tight font-bold mb-4">services</p>
 		<img class="shadow-md shadow-primary mb-4" src="/assets/limits.png"/>
-		<p class="text-secondary text-xl/tight text-center font-light pt-1 mb-4">With Throttlr, handling API rate limits has never been easier. Set global limits for all of your services and get back to what matters most.</p>
+		<p class="text-secondary text-xl/tight text-center font-light pt-1 my-8">With Throttlr, handling API rate limits has never been easier. Set global limits for all of your services and get back to what matters most.</p>
 		@partials.CTA("Sign up here!", "/sign-up")
 	</section>
 }
 
 templ setup() {
-	<section class="flex flex-col items-center mt-4">
+	<section class="flex flex-col items-center mt-8">
 		<p class="text-secondary text-5xl/tight font-bold">Dead <span class="underline">simple</span></p>
 		<p class="text-secondary text-5xl/tight font-bold">endpoint</p>
-		<p class="text-secondary text-5xl/tight font-bold">setup</p>
+		<p class="text-secondary text-5xl/tight font-bold mb-4">setup</p>
 		<img class="shadow-md shadow-primary mb-4" src="/assets/setup.png"/>
-		<p class="text-secondary text-xl/tight text-center font-light">Need something simple? </p>
+		<p class="text-secondary text-xl/tight text-center font-light mt-8">Need something simple? </p>
 		<p class="text-secondary text-xl/tight text-center font-light">We got you! </p>
-		<p class="text-secondary text-xl/tight text-center font-light">Only the essentials are required. </p>
-		<p class="text-secondary text-xl/tight text-center font-light mb-4">(Don’t worry, <a href="#" class="underline">more complex operations are supported too!</a>) </p>
+		<p class="text-secondary text-xl/tight text-center font-light mb-8">Only the essentials are required. </p>
 		@partials.CTA("Check it out", "/sign-up")
-	</section>
-}
-
-templ headers() {
-	<section class="flex flex-col items-center mt-4">
-		<p class="text-secondary text-5xl/tight font-bold underline">Fully custom</p>
-		<p class="text-secondary text-5xl/tight font-bold">HTTP</p>
-		<p class="text-secondary text-5xl/tight font-bold">headers</p>
-		<img class="shadow-md shadow-primary mb-4" src="/assets/headers.png"/>
-		<p class="text-secondary text-xl/tight text-center font-light mb-4">Maintaining simplicity, feel free to add any amount of headers right on the edit page. For more flexibility, dynamic headers are your friend!</p>
-		@partials.CTA("Take me there", "/sign-up")
 	</section>
 }
 

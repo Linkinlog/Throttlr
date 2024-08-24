@@ -23,7 +23,7 @@ func BetaBanner() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a class=\"w-full bg-yellow-400 text-center text-dark p-2 mb-4 rounded text-xs/3 no-underline\" href=\"https://getwaitlist.com/waitlist/15760\"><p>Thank you for your interest! We are currently in development.</p><p>Please <span class=\"underline\">click here</span> to be notified when we launch.</p></a>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a class=\"w-full bg-yellow-400 text-center text-dark p-2 mb-4 rounded text-xs/3 md:text-sm/3 no-underline\" href=\"https://getwaitlist.com/waitlist/15760\"><p>Thank you for your interest! We are currently in development.</p><p>Please <span class=\"underline\">click here</span> to be notified when we launch.</p></a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
