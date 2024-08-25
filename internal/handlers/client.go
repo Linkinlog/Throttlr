@@ -61,7 +61,7 @@ func HandleClient(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 		if r.URL.Path == "/" {
 			u, err := models.UserFromSession(r, gs)
 			if err == nil {
-				es := db.NewEndpointStore(pool)
+				es := db.NewEndpointStore(pool, l)
 				endpoints, err := es.AllForUser(r.Context(), u.Id)
 				if err != nil {
 					l.Error("failed to get user endpoints", "error", err)
@@ -119,7 +119,7 @@ func handleView(view shared.Viewer, l *slog.Logger) http.HandlerFunc {
 }
 
 func handleViewEndpoint(pool *pgxpool.Pool, gs sessions.Store, l *slog.Logger) http.HandlerFunc {
-	es := db.NewEndpointStore(pool)
+	es := db.NewEndpointStore(pool, l)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		throttlrPath := r.PathValue("throttlrPath")

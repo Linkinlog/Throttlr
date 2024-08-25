@@ -3,12 +3,20 @@ package internal
 import (
 	"errors"
 	"os"
+	"strings"
 )
 
 var (
 	DefaultEnv = NewEnv()
 	NotFound   = errors.New("key not found")
 )
+
+func Debug() bool {
+	if d, err := DefaultEnv.Get("DEBUG"); err == nil {
+		return strings.EqualFold(d, "true")
+	}
+	return false
+}
 
 func ClientDB() string {
 	db := "postgres://username:password@localhost:5432/database_name"

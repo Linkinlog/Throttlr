@@ -6,7 +6,8 @@ services:
     ports:
       - "8090:8080"
     environment:
-      ENV: production
+      ENV: ${ENV}
+      DEBUG: ${DEBUG}
       GITHUB_KEY: ${GITHUB_KEY}
       GITHUB_SECRET: ${GITHUB_SECRET}
       GOOGLE_KEY: ${GOOGLE_KEY}
@@ -38,7 +39,8 @@ services:
     ports:
       - "8091:8081"
     environment:
-      ENV: production
+      ENV: ${ENV}
+      DEBUG: ${DEBUG}
       SESSION_SECRET: ${SESSION_SECRET}
       SERVER_DB: ${SERVER_DB}
       CLIENT_CALLBACK_URL: ${CLIENT_CALLBACK_URL}

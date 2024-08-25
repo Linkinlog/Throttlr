@@ -24,16 +24,22 @@ func init() {
 }
 
 func main() {
-	s := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	s.Info("Server listening", "port", port)
+	level := slog.LevelInfo
+	if internal.Debug() {
+		level = slog.LevelDebug
+	}
+
+	opts := &slog.HandlerOptions{AddSource: true, Level: level}
+	l := slog.New(slog.NewTextHandler(os.Stdout, opts))
+	l.Info("Server listening", "port", port)
 
 	sqlDb, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		s.Error("failed to open database", "err", err)
+		l.Error("failed to open database", "err", err)
 		return
 	}
 	defer sqlDb.Close()
 
-	mux := handlers.HandleServer(s, sqlDb)
-	s.Error("main.go", "err", http.ListenAndServe(":"+port, mux))
+	mux := handlers.HandleServer(l, sqlDb)
+	l.Error("main.go", "err", http.ListenAndServe(":"+port, mux))
 }

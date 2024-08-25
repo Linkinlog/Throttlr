@@ -36,8 +36,9 @@ var (
 	BucketExists          = errors.New("bucket already exists")
 )
 
-func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
+func (e *endpoint) apiLogHandler(h HandlerErrorFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		e.l.Debug("hit", "method", r.Method, "path", r.URL.Path, "source", r.Header.Get("Cf-Connecting-IP"))
 		httpErr := h(w, r)
 		if httpErr != nil {
 			status := http.StatusInternalServerError
@@ -45,13 +46,16 @@ func apiLogHandler(l *slog.Logger, h HandlerErrorFunc) http.HandlerFunc {
 				status = http.StatusTooManyRequests
 			}
 			http.Error(w, httpErr.display, status)
-			l.Error("api handler error", "error", httpErr.Error())
+			e.l.Error("api handler error", "error", httpErr.Error())
 		}
 	}
 }
 
 func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	m := http.NewServeMux()
+
+	e := &endpoint{pool: pool, l: l}
+	m.Handle("/v1/", http.StripPrefix("/v1", e.serveV1()))
 
 	m.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -61,7 +65,6 @@ func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 		}
 	})
 
-	m.Handle("/v1/", http.StripPrefix("/v1", serveV1(l, pool)))
 	m.Handle("GET /swagger/", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),                        // The url pointing to API definition
 		httpSwagger.DefaultModelsExpandDepth(httpSwagger.HideModel), // Models will not be expanded
@@ -70,14 +73,19 @@ func HandleServer(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	return m
 }
 
-func serveV1(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
+type endpoint struct {
+	pool *pgxpool.Pool
+	l    *slog.Logger
+}
+
+func (e *endpoint) serveV1() *http.ServeMux {
 	m := http.NewServeMux()
 
-	m.Handle("POST /register", apiLogHandler(l, registerEndpoint(pool)))
-	m.Handle("POST /update/{throttlrPath}", apiLogHandler(l, updateEndpoint(pool)))
-	m.Handle("POST /delete/{throttlrPath}", apiLogHandler(l, deleteEndpoint(pool)))
-	m.Handle("/endpoints/{throttlrPath}", apiLogHandler(l, throttleEndpoint(pool)))
-	m.Handle("/proxy/{throttlrPath}", apiLogHandler(l, proxyEndpoint(pool)))
+	m.Handle("POST /register", e.apiLogHandler(e.registerEndpoint()))
+	m.Handle("POST /update/{throttlrPath}", e.apiLogHandler(e.updateEndpoint()))
+	m.Handle("POST /delete/{throttlrPath}", e.apiLogHandler(e.deleteEndpoint()))
+	m.Handle("/endpoints/{throttlrPath}", e.apiLogHandler(e.throttleEndpoint()))
+	m.Handle("/proxy/{throttlrPath}", e.apiLogHandler(e.proxyEndpoint()))
 
 	return m
 }
@@ -95,8 +103,8 @@ func serveV1(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 // @Router			/endpoints/{throttlrPath} [get]
 // @Router			/endpoints/{throttlrPath} [post]
 // @Failure		429	{string}	string	"Too many requests"
-func throttleEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
-	es := db.NewEndpointStore(pool)
+func (e *endpoint) throttleEndpoint() HandlerErrorFunc {
+	es := db.NewEndpointStore(e.pool, e.l)
 	var m sync.Mutex
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		if r.Context().Err() != nil {
@@ -108,7 +116,7 @@ func throttleEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 		m.Lock()
 		defer m.Unlock()
 
-		e, uId, httpErr := validateEndpointRequest(pool, r)
+		e, uId, httpErr := validateEndpointRequest(e.pool, r, e.l)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -182,9 +190,9 @@ func throttleEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 // @Security		ApiKeyAuth
 // @Router			/proxy/{throttlrPath} [get]
 // @Router			/proxy/{throttlrPath} [post]
-func proxyEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
+func (e *endpoint) proxyEndpoint() HandlerErrorFunc {
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
-		e, _, httpErr := validateEndpointRequest(pool, r)
+		e, _, httpErr := validateEndpointRequest(e.pool, r, e.l)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -222,9 +230,9 @@ func modifyRequest(r *http.Request, originalUrl *url.URL) {
 // @Param			max			formData	int		true	"Max requests per interval"
 // @Success		201			{string}	string	"Created"
 // @Router			/register [post]
-func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
-	ks := db.NewKeyStore(pool)
-	es := db.NewEndpointStore(pool)
+func (e *endpoint) registerEndpoint() HandlerErrorFunc {
+	ks := db.NewKeyStore(e.pool)
+	es := db.NewEndpointStore(e.pool, e.l)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		endpoint, httpErr := validateRegisterEndpointRequest(r)
@@ -245,7 +253,9 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 			}
 		}
 
+		e.l.Debug("register endpoint", "checking if exists", endpoint, "userId", userId)
 		if exists, err := es.ExistsByOriginal(r.Context(), endpoint, userId); exists {
+			e.l.Debug("register endpoint", "already exists", exists, "err", err)
 			if err != nil {
 				return &httpError{
 					fmt.Errorf("register endpoint: failed to check if endpoint exists: %w", err),
@@ -253,19 +263,22 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 				}
 			} else {
 				return &httpError{
-					fmt.Errorf("register endpoint: failed to check if endpoint exists: %w", EndpointExists),
+					fmt.Errorf("register endpoint: endpoint exists: %w", EndpointExists),
 					"Endpoint already exists",
 				}
 			}
 		}
 
+		e.l.Debug("register endpoint", "storing", endpoint, "userId", userId)
 		_, err = es.Store(r.Context(), endpoint, userId)
 		if err != nil {
+			e.l.Debug("register endpoint", "failed to store", err)
 			return &httpError{
 				fmt.Errorf("register endpoint: failed to store endpoint: %w", err),
 				"failed to store endpoint",
 			}
 		}
+		e.l.Debug("register endpoint", "stored", endpoint, "userId", userId)
 
 		proxiedURL := fmt.Sprintf("%s/v1/endpoints/%s?key=%s",
 			internal.ServerCallbackURL(),
@@ -275,7 +288,7 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 
 		if r.Header.Get("Hx-Request") == "true" {
 			htmlResponse := fmt.Sprintf(
-				"Success! Endpoint registered at <a href='%s' target='_blank'>Here</a>",
+				"Success! Endpoint registered, try it <a href='%s' target='_blank'>here</a>",
 				proxiedURL,
 			)
 			w.WriteHeader(http.StatusCreated)
@@ -318,9 +331,9 @@ func registerEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 // @Param			throttlrPath	path		string	true	"Throttlr path"
 // @Success		201				{string}	string	"Created"
 // @Router			/update/{throttlrPath} [post]
-func updateEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
-	es := db.NewEndpointStore(pool)
-	ks := db.NewKeyStore(pool)
+func (e *endpoint) updateEndpoint() HandlerErrorFunc {
+	es := db.NewEndpointStore(e.pool, e.l)
+	ks := db.NewKeyStore(e.pool)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key, httpErr := validateApiKey(r, ks)
@@ -454,9 +467,9 @@ func updateEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 // @Param			throttlrPath	path		string	true	"Throttlr path"
 // @Success		200				{string}	string	"Deleted"
 // @Router			/delete/{throttlrPath} [post]
-func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
-	ks := db.NewKeyStore(pool)
-	es := db.NewEndpointStore(pool)
+func (e *endpoint) deleteEndpoint() HandlerErrorFunc {
+	ks := db.NewKeyStore(e.pool)
+	es := db.NewEndpointStore(e.pool, e.l)
 
 	return func(w http.ResponseWriter, r *http.Request) *httpError {
 		key, httpErr := validateApiKey(r, ks)
@@ -503,9 +516,9 @@ func deleteEndpoint(pool *pgxpool.Pool) HandlerErrorFunc {
 	}
 }
 
-func validateEndpointRequest(pool *pgxpool.Pool, r *http.Request) (*models.Endpoint, string, *httpError) {
+func validateEndpointRequest(pool *pgxpool.Pool, r *http.Request, l *slog.Logger) (*models.Endpoint, string, *httpError) {
 	ks := db.NewKeyStore(pool)
-	es := db.NewEndpointStore(pool)
+	es := db.NewEndpointStore(pool, l)
 
 	key := r.URL.Query().Get("key")
 	exists, apiKeyId := ks.Exists(key, r.Context())

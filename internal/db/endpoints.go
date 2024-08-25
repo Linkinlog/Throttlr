@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 
 	"github.com/jackc/pgx/v5"
@@ -10,11 +11,14 @@ import (
 	"github.com/linkinlog/throttlr/internal/models"
 )
 
-func NewEndpointStore(db *pgxpool.Pool) *EndpointStore {
-	return &EndpointStore{db: db}
+func NewEndpointStore(db *pgxpool.Pool, l *slog.Logger) *EndpointStore {
+	return &EndpointStore{db: db, l: l}
 }
 
-type EndpointStore struct{ db *pgxpool.Pool }
+type EndpointStore struct {
+	db *pgxpool.Pool
+	l  *slog.Logger
+}
 
 func (es *EndpointStore) AllForUser(ctx context.Context, userId string) ([]*models.Endpoint, error) {
 	allQuery := `
@@ -34,6 +38,7 @@ where
   api_keys.valid = true
   and api_keys.user_id = $1
 `
+	es.l.Debug("all for user", "query", allQuery, "userId", userId)
 	rows, err := es.db.Query(ctx, allQuery, userId)
 	if err != nil {
 		return nil, err
@@ -71,12 +76,25 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId s
 		_ = tx.Rollback(ctx)
 	}()
 
+	existsQuery := `
+SELECT
+  EXISTS (
+    SELECT
+      throttlr_url
+    FROM
+      endpoints
+    WHERE
+      throttlr_url = $1
+      and endpoints.user_id = $2
+  );
+`
 	// not a huge fan of any of this but it works for now
 	for {
+		es.l.Debug("store", "query", existsQuery, "originalUrl", e.OriginalUrl, "userId", userId)
 		var exists bool
 		err := es.db.QueryRow(
 			ctx,
-			"SELECT EXISTS(SELECT throttlr_url FROM endpoints WHERE throttlr_url = $1 and endpoints.user_id = $2)",
+			existsQuery,
 			e.OriginalUrl,
 			userId,
 		).Scan(&exists)
@@ -91,14 +109,30 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId s
 		}
 	}
 
+	insertBucketQuery := `
+INSERT INTO
+  buckets (max, interval, current)
+VALUES
+  ($1, $2, $3) Returning id
+`
+
+	es.l.Debug("store", "query", insertBucketQuery, "max", e.Bucket.Max, "interval", e.Bucket.Interval, "current", e.Bucket.Current)
 	var bucketId int
-	err = tx.QueryRow(ctx, "INSERT INTO buckets (max, interval, current) VALUES ($1, $2, $3) Returning id", e.Bucket.Max, e.Bucket.Interval, e.Bucket.Current).Scan(&bucketId)
+	err = tx.QueryRow(ctx, insertBucketQuery, e.Bucket.Max, e.Bucket.Interval, e.Bucket.Current).Scan(&bucketId)
 	if err != nil {
 		return 0, err
 	}
 
+	insertEndpointQuery := `
+INSERT INTO
+  endpoints (user_id, bucket_id, original_url, throttlr_url)
+VALUES
+  ($1, $2, $3, $4) Returning id
+`
+
+	es.l.Debug("store", "query", insertEndpointQuery, "userId", userId, "bucketId", bucketId, "originalUrl", e.OriginalUrl.String(), "throttlrPath", e.ThrottlrPath)
 	var id int
-	err = tx.QueryRow(ctx, "INSERT INTO endpoints (user_id, bucket_id, original_url, throttlr_url) VALUES ($1, $2, $3, $4) Returning id", userId, bucketId, e.OriginalUrl.String(), e.ThrottlrPath).Scan(&id)
+	err = tx.QueryRow(ctx, insertEndpointQuery, userId, bucketId, e.OriginalUrl.String(), e.ThrottlrPath).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -108,13 +142,39 @@ func (es *EndpointStore) Store(ctx context.Context, e *models.Endpoint, userId s
 
 func (es *EndpointStore) ExistsByOriginal(ctx context.Context, endpoint *models.Endpoint, userId string) (bool, error) {
 	var exists bool
-	err := es.db.QueryRow(ctx, "SELECT EXISTS(SELECT id FROM endpoints WHERE original_url = $1 and user_id = $2)", endpoint.OriginalUrl, userId).Scan(&exists)
+	existsByOriginalQuery := `
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            endpoints
+        WHERE
+            original_url = $1
+            and user_id = $2
+    );
+`
+	es.l.Debug("exists by original", "query", existsByOriginalQuery, "originalUrl", endpoint.OriginalUrl, "userId", userId)
+	err := es.db.QueryRow(ctx, existsByOriginalQuery, endpoint.OriginalUrl, userId).Scan(&exists)
 	return exists, err
 }
 
 func (es *EndpointStore) ExistsByThrottlr(ctx context.Context, endpoint *models.Endpoint, userId string) (bool, error) {
 	var exists bool
-	err := es.db.QueryRow(ctx, "SELECT EXISTS(SELECT id FROM endpoints WHERE throttlr_url = $1 and user_id = $2)", endpoint.ThrottlrPath, userId).Scan(&exists)
+	existsByThrottlrQuery := `
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            endpoints
+        WHERE
+            throttlr_url = $1
+            and user_id = $2
+    );
+`
+	es.l.Debug("exists by throttlr", "query", existsByThrottlrQuery, "throttlrPath", endpoint.ThrottlrPath, "userId", userId)
+	err := es.db.QueryRow(ctx, existsByThrottlrQuery, endpoint.ThrottlrPath, userId).Scan(&exists)
 	return exists, err
 }
 
@@ -138,6 +198,8 @@ WHERE
 	throttlr_url = $1
 	and user_id = $2
 `
+	es.l.Debug("fill", "query", query, "throttlrPath", endpoint.ThrottlrPath, "userId", userId)
+
 	var URL string
 	err := es.db.QueryRow(ctx, query, endpoint.ThrottlrPath, userId).Scan(&endpoint.Id, &endpoint.ThrottlrPath, &URL, &endpoint.Bucket.Max, &endpoint.Bucket.Interval, &endpoint.Bucket.Current, &endpoint.Bucket.WindowOpenedAt)
 	if err != nil {
@@ -173,6 +235,8 @@ WHERE
 	endpoints.throttlr_url = $1
 	and user_id = $2
 `
+	es.l.Debug("get", "query", query, "throttlrPath", throttlrPath, "userId", userId)
+
 	e := &models.Endpoint{Bucket: &models.Bucket{}}
 	var URL string
 	err := es.db.QueryRow(ctx, query, throttlrPath, userId).Scan(&e.Id, &e.ThrottlrPath, &URL, &e.Bucket.Max, &e.Bucket.Interval, &e.Bucket.Current, &e.Bucket.WindowOpenedAt)
@@ -197,7 +261,16 @@ func (es *EndpointStore) Delete(ctx context.Context, endpoint *models.Endpoint, 
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
-	_, err = tx.Exec(ctx, "DELETE FROM endpoints WHERE throttlr_url = $1 and user_id = $2", endpoint.ThrottlrPath, userId)
+
+	deleteQuery := `
+DELETE FROM
+    endpoints
+WHERE
+    throttlr_url = $1
+    and user_id = $2
+`
+	es.l.Debug("delete", "query", deleteQuery, "throttlrPath", endpoint.ThrottlrPath, "userId", userId)
+	_, err = tx.Exec(ctx, deleteQuery, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}
@@ -213,8 +286,23 @@ func (es *EndpointStore) Update(ctx context.Context, endpoint *models.Endpoint, 
 		_ = tx.Rollback(ctx)
 	}()
 
+	existsQuery := `
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            endpoints
+        WHERE
+            throttlr_url <> $1
+            and original_url = $2
+            and user_id = $3
+
+    );
+`
+	es.l.Debug("update", "query", existsQuery, "throttlrPath", endpoint.ThrottlrPath, "originalUrl", endpoint.OriginalUrl.String(), "userId", userId)
 	var exists bool
-	err = tx.QueryRow(ctx, "SELECT EXISTS(SELECT id from endpoints WHERE throttlr_url <> $1 and original_url = $2 and user_id = $3)", endpoint.ThrottlrPath, endpoint.OriginalUrl.String(), userId).Scan(&exists)
+	err = tx.QueryRow(ctx, existsQuery, endpoint.ThrottlrPath, endpoint.OriginalUrl.String(), userId).Scan(&exists)
 	if err != nil {
 		return err
 	}
@@ -238,7 +326,24 @@ func (es *EndpointStore) UpdateBucketCount(ctx context.Context, endpoint *models
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "UPDATE buckets SET current = $1 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $2 and user_id = $3)", endpoint.Bucket.Current, endpoint.ThrottlrPath, userId)
+
+	updateBucketCountQuery := `
+UPDATE buckets
+SET
+  current = $1
+WHERE
+  id = (
+    SELECT
+      bucket_id
+    FROM
+      endpoints
+    WHERE
+      throttlr_url = $2
+      and user_id = $3
+  );
+`
+	es.l.Debug("update bucket count", "query", updateBucketCountQuery, "current", endpoint.Bucket.Current, "throttlrPath", endpoint.ThrottlrPath, "userId", userId)
+	_, err = tx.Exec(ctx, updateBucketCountQuery, endpoint.Bucket.Current, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}
@@ -250,7 +355,24 @@ func (es *EndpointStore) UpdateWindowOpenedAt(ctx context.Context, endpoint *mod
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "UPDATE buckets SET window_opened_at = $1 WHERE id = (SELECT bucket_id FROM endpoints WHERE throttlr_url = $2 and user_id = $3)", endpoint.Bucket.WindowOpenedAt, endpoint.ThrottlrPath, userId)
+
+	updateWindowOpenedAtQuery := `
+UPDATE buckets
+SET
+  window_opened_at = $1
+WHERE
+  id = (
+    SELECT
+      bucket_id
+    FROM
+      endpoints
+    WHERE
+      throttlr_url = $2
+      and user_id = $3
+  );
+`
+	es.l.Debug("update window opened at", "query", updateWindowOpenedAtQuery, "windowOpenedAt", endpoint.Bucket.WindowOpenedAt, "throttlrPath", endpoint.ThrottlrPath, "userId", userId)
+	_, err = tx.Exec(ctx, updateWindowOpenedAtQuery, endpoint.Bucket.WindowOpenedAt, endpoint.ThrottlrPath, userId)
 	if err != nil {
 		return err
 	}

@@ -14,11 +14,17 @@ import (
 var port = "8080"
 
 func main() {
-	s := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	s.Info("Server listening", "port", port)
+	level := slog.LevelInfo
+	if internal.Debug() {
+		level = slog.LevelDebug
+	}
+
+	opts := &slog.HandlerOptions{AddSource: true, Level: level}
+	l := slog.New(slog.NewTextHandler(os.Stdout, opts))
+	l.Info("Server listening", "port", port)
 
 	if err := setupAuth(); err != nil {
-		s.Error("failed to setup auth", "err", err)
+		l.Error("failed to setup auth", "err", err)
 		return
 	}
 
@@ -26,13 +32,13 @@ func main() {
 
 	sqlDb, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		s.Error("failed to open database", "err", err)
+		l.Error("failed to open database", "err", err)
 		return
 	}
 	defer sqlDb.Close()
 
-	mux := handlers.HandleClient(s, sqlDb)
-	s.Error("main.go", "err", http.ListenAndServe(":"+port, mux))
+	mux := handlers.HandleClient(l, sqlDb)
+	l.Error("main.go", "err", http.ListenAndServe(":"+port, mux))
 }
 
 func setupAuth() error {
