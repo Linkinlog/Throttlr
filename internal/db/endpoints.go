@@ -22,8 +22,8 @@ type EndpointStore struct {
 
 func (es *EndpointStore) AllForUser(ctx context.Context, userId string) ([]*models.Endpoint, error) {
 	allQuery := `
-SELECT
-  endpoints.id,
+SELECT DISTINCT
+  ON (endpoints.id) endpoints.id,
   original_url,
   throttlr_url,
   max,
@@ -32,11 +32,20 @@ SELECT
   window_opened_at
 FROM
   endpoints
-  JOIN api_keys on api_keys.user_id = endpoints.user_id
-  JOIN buckets on buckets.id = endpoints.bucket_id
-where
-  api_keys.valid = true
-  and api_keys.user_id = $1
+  JOIN buckets ON buckets.id = endpoints.bucket_id
+WHERE
+  EXISTS (
+    SELECT
+      1
+    FROM
+      api_keys
+    WHERE
+      api_keys.user_id = endpoints.user_id
+      AND api_keys.valid = true
+      AND api_keys.user_id = $1
+  )
+ORDER BY
+  endpoints.id;
 `
 	es.l.Debug("all for user", "query", allQuery, "userId", userId)
 	rows, err := es.db.Query(ctx, allQuery, userId)
