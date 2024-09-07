@@ -7,6 +7,7 @@ services:
       - "8090:8080"
     environment:
       ENV: ${ENV}
+      SELF_HOSTED: ${SELF_HOSTED}
       DEBUG: ${DEBUG}
       GITHUB_KEY: ${GITHUB_KEY}
       GITHUB_SECRET: ${GITHUB_SECRET}
@@ -40,6 +41,7 @@ services:
       - "8091:8081"
     environment:
       ENV: ${ENV}
+      SELF_HOSTED: ${SELF_HOSTED}
       DEBUG: ${DEBUG}
       SESSION_SECRET: ${SESSION_SECRET}
       SERVER_DB: ${SERVER_DB}

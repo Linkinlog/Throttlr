@@ -11,6 +11,13 @@ var (
 	NotFound   = errors.New("key not found")
 )
 
+func SelfHosted() bool {
+	if s, err := DefaultEnv.Get("SELF_HOSTED"); err == nil {
+		return strings.EqualFold(s, "true")
+	}
+	return false
+}
+
 func Debug() bool {
 	if d, err := DefaultEnv.Get("DEBUG"); err == nil {
 		return strings.EqualFold(d, "true")
