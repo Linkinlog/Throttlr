@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o main -ldflags "-s -w" ./cmd/client/main.go
+RUN make build.client
 
 FROM alpine:latest AS alpine
 
@@ -18,9 +18,9 @@ WORKDIR /root/
 
 RUN apk add --no-cache curl;
 
-COPY --from=builder /app/main .
+COPY --from=builder /app/client .
 
 ARG ENV
 ENV ENV=$ENV
 
-CMD ["./main"]
+CMD ["./client"]
