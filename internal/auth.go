@@ -61,6 +61,11 @@ func AuthenticateUserRequest(
 		return err
 	}
 	uId := fmt.Sprintf("%s-%s", u.UserID, u.Provider)
+
+	return SaveNewUserToSession(uId, u.Name, u.Email, r, w, gs, us)
+}
+
+func SaveNewUserToSession(uId, uName, uEmail string, r *http.Request, w http.ResponseWriter, gs sessions.Store, us *db.UserStore) error {
 	usr, err := us.ById(r.Context(), uId)
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -70,17 +75,13 @@ func AuthenticateUserRequest(
 	if errors.Is(err, pgx.ErrNoRows) {
 		usr = models.NewUser().
 			SetId(uId).
-			SetName(u.Name).
-			SetEmail(u.Email)
+			SetName(uName).
+			SetEmail(uEmail)
 
 		if err := us.Store(r.Context(), *usr); err != nil {
 			return err
 		}
 	}
 
-	sErr := usr.SaveToSession(r, w, gs)
-	if sErr != nil {
-		return sErr
-	}
-	return nil
+	return usr.SaveToSession(r, w, gs)
 }

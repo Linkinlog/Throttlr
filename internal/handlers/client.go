@@ -53,10 +53,10 @@ func HandleClient(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 	m.Handle("POST /v1/update/{throttlrPath}", proxyToServer())
 	m.Handle("POST /v1/delete/{throttlrPath}", proxyToServer())
 
-	m.Handle("GET /auth/", http.StripPrefix("/auth", HandleAuth(l, pool, gs)))
+	m.Handle("/auth/", http.StripPrefix("/auth", HandleAuth(l, pool, gs)))
 
 	// catch-all + landing
-	m.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handler := handleView(shared.NewLayout(pages.NewNotFound(), ""), l)
 		if r.URL.Path == "/" {
 			u, err := models.UserFromSession(r, gs)

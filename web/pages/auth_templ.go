@@ -10,15 +10,18 @@ import "context"
 import "io"
 import "bytes"
 
-import "github.com/linkinlog/throttlr/web/partials"
-import "github.com/linkinlog/throttlr/web/shared"
+import (
+	"github.com/linkinlog/throttlr/web/partials"
+	"github.com/linkinlog/throttlr/web/shared"
+)
 
 func NewAuth(hasAcc bool) auth {
 	return auth{hasAcc: hasAcc}
 }
 
 type auth struct {
-	hasAcc bool
+	hasAcc       bool
+	OauthEnabled bool
 }
 
 func (a auth) Props() shared.PageProps {
@@ -91,27 +94,40 @@ func (a auth) hero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = a.githubOauth().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = a.googleOauth().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if a.OauthEnabled {
+			templ_7745c5c3_Err = a.githubOauth().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = a.googleOauth().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form action=\"/auth/sign-in\" method=\"POST\" class=\"flex flex-col items-center\"><input type=\"text\" name=\"name\" class=\"border-2 border-primary rounded-lg p-2 w-60 mb-4\" placeholder=\"Name\"> <input type=\"email\" name=\"email\" class=\"border-2 border-primary rounded-lg p-2 w-60 mb-4\" placeholder=\"Email\"> <button class=\"bg-primary text-dark rounded-lg w-full h-12 text-2xl mt-4 relative floaty\">Sign In</button></form>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if a.hasAcc {
-			templ_7745c5c3_Err = partials.CTA("No account? Sign up", "/sign-up").Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = partials.CTA("Have an account? Sign in", "/sign-in").Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
+		if a.OauthEnabled {
+			if a.hasAcc {
+				templ_7745c5c3_Err = partials.CTA("No account? Sign up", "/sign-up").Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = partials.CTA("Have an account? Sign in", "/sign-in").Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</section>")
@@ -145,7 +161,7 @@ func (a auth) googleOauth() templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(getText(a.hasAcc))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth.templ`, Line: 49, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth.templ`, Line: 66, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -190,7 +206,7 @@ func (a auth) githubOauth() templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(getText(a.hasAcc))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth.templ`, Line: 56, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth.templ`, Line: 73, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {

@@ -38,8 +38,29 @@ func HandleAuth(l *slog.Logger, pool *pgxpool.Pool, gs sessions.Store) *http.Ser
 	m.Handle("GET /sign-out", logHandler(l, gs, handleLogout(gs)))
 	m.Handle("GET /delete", withUser(logHandler(l, gs, handleDelete(pool)), gs))
 	m.Handle("GET /regenerate", withUser(logHandler(l, gs, handleRegenKey(pool, gs)), gs))
-	m.Handle("GET /{provider}", logHandler(l, gs, handleProvider(pool, gs)))
-	m.Handle("GET /{provider}/callback", logHandler(l, gs, handleProviderCallback(pool, gs)))
+
+	if !internal.SelfHosted() {
+		m.Handle("GET /{provider}", logHandler(l, gs, handleProvider(pool, gs)))
+		m.Handle("GET /{provider}/callback", logHandler(l, gs, handleProviderCallback(pool, gs)))
+	}
+
+	if internal.SelfHosted() {
+		m.Handle("POST /sign-in", logHandler(l, gs, func(w http.ResponseWriter, r *http.Request) *httpError {
+			uEmail := r.FormValue("email")
+			uName := r.FormValue("name")
+			uId := fmt.Sprintf("%s-%s", uName, uEmail)
+			us := db.NewUserStore(pool)
+			err := internal.SaveNewUserToSession(uId, uName, uEmail, r, w, gs, us)
+			if err != nil {
+				return &httpError{
+					error: internal.SaveNewUserToSession(uId, uName, uEmail, r, w, gs, us),
+				}
+			}
+			w.Header().Set("Location", "/")
+			w.WriteHeader(http.StatusTemporaryRedirect)
+			return nil
+		}))
+	}
 
 	return m
 }
