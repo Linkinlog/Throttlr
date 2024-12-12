@@ -3,7 +3,7 @@ module github.com/linkinlog/throttlr
 go 1.22.2
 
 require (
-	github.com/a-h/templ v0.2.663
+	github.com/a-h/templ v0.2.793
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.1.1
 	github.com/jackc/pgx/v5 v5.6.0
@@ -36,10 +36,9 @@ require (
 	github.com/swaggo/files/v2 v2.0.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/oauth2 v0.17.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.13.0 // indirect
+	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -5,13 +5,13 @@ import (
 	"github.com/linkinlog/throttlr/web/shared"
 )
 
-func NewAuth(hasAcc bool) auth {
-	return auth{hasAcc: hasAcc}
+func NewAuth(hasAcc, oauthEnabled bool) auth {
+	return auth{hasAcc: hasAcc, oauthEnabled: oauthEnabled}
 }
 
 type auth struct {
 	hasAcc       bool
-	OauthEnabled bool
+	oauthEnabled bool
 }
 
 func (a auth) Props() shared.PageProps {
@@ -35,7 +35,7 @@ templ (a auth) hero() {
 			<p class="text-secondary text-5xl/tight font-bold underline">Today</p>
 		}
 		<section class="my-4">
-			if a.OauthEnabled {
+			if a.oauthEnabled {
 				@a.githubOauth()
 				@a.googleOauth()
 			} else {
@@ -50,7 +50,7 @@ templ (a auth) hero() {
 				</form>
 			}
 		</section>
-		if a.OauthEnabled {
+		if a.oauthEnabled {
 			if a.hasAcc {
 				@partials.CTA("No account? Sign up", "/sign-up")
 			} else {

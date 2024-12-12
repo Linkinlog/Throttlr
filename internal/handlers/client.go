@@ -42,9 +42,10 @@ func HandleClient(l *slog.Logger, pool *pgxpool.Pool) *http.ServeMux {
 
 	m.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.NewAssets()))))
 
+	oauthEnabled := !internal.SelfHosted()
 	m.Handle("GET /about", withUser(handleView(shared.NewLayout(pages.NewAbout(), ""), l), gs))
-	m.Handle("GET /sign-up", withUser(handleView(shared.NewLayout(pages.NewAuth(false), ""), l), gs))
-	m.Handle("GET /sign-in", withUser(handleView(shared.NewLayout(pages.NewAuth(true), ""), l), gs))
+	m.Handle("GET /sign-up", withUser(handleView(shared.NewLayout(pages.NewAuth(false, oauthEnabled), ""), l), gs))
+	m.Handle("GET /sign-in", withUser(handleView(shared.NewLayout(pages.NewAuth(true, oauthEnabled), ""), l), gs))
 	m.Handle("GET /settings", withUser(handleView(shared.NewLayout(pages.NewSettings(), ""), l), gs))
 
 	m.Handle("GET /endpoints", withUser(handleView(shared.NewLayout(pages.NewEndpointForm(), ""), l), gs))
